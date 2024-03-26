@@ -12,7 +12,7 @@ from Gui.ui_PortSelect import *
 from Logic.BreakPointDialog import  *
 from Logic.PortSent import *
 from PyQt5.QtSerialPort import QSerialPortInfo, QSerialPort
-
+serial_is_open = False
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     sign_one = pyqtSignal(str)
 
@@ -20,24 +20,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
-        #PortSent().CleanBreakPoint()
-        #self.set_RAM()
-        #PortSent().listport()
+
 
         self.actionUpdateregister.triggered.connect(self.get_register)
         self.actionOpen.triggered.connect(self.gethex)
         self.actionLoad.triggered.connect(self.upload)
         self.actionStep_Run.triggered.connect(self.set_register)
-        self.actionList_Port.triggered.connect(PortSelectDialog.listport)
-        #self.actionList_Port.triggered.connect(PortSelectDialog.PortSelect_show)
-        self.actionOpen_Port.triggered.connect(PortSelectDialog.openport)
 
-        self.actionClean_All_Break_Point.triggered.connect(PortSelectDialog.CleanBreakPoint)
 
+        def PortSelect_show():
+            ps = PortSelectDialog()
+            ps.exec()
+            #ps.closeEvent()
         def BreakPointDialog_show():
             bk = BreakPointDialog()
             bk.show()
         self.actionMake_BreakPoint.triggered.connect(BreakPointDialog_show)
+        self.actionList_Port.triggered.connect(PortSelect_show)
     def gethex(self):
         # From disk open file format（*.hex），return dir
         global hexfile_dir
@@ -59,72 +58,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         PortSent.upload51(s)
         return hexfile_dir
 
-    '''
-    def upload51(filename,port):
-        try:   #check if hex-file exits(prevents FileNotFoundError)
-            if not os.path.isfile(path):
-                print("> > > ERROR: File '{}' not found".format(filename))
-                exit(1)
-
-            # count tries to cancel upload if board is not resetted
-            i = 0
-
-            #open file
-            with open(path, mode="r") as file:
-
-                # open serial port
-                with serial.Serial(
-                    port, 9600,
-                    timeout=1,
-                    bytesize=serial.EIGHTBITS,
-                    parity=serial.PARITY_NONE,
-                    stopbits=serial.STOPBITS_ONE
-                )as board:
-
-                    # wait for reset
-                    print("> Connectiong to MPT2-Labbord...")
-                    while i < 10:
-                        i += 1
-                        board.write("\x03".encode("utf-8"))
-                        s = board.read_unit(expected="#".encode("utf-8")).decode("utf-8")
-                        if len(s) > 0 and s[-1] == "#":
-                            break
-                    else:
-                        raise Exception("Could not connect to MPT2-Labboard. Please reset and try again.")
-
-                    # Ignorierte Befehle, da Wirkung nicht bekannt:
-                        # schicke "F\r"
-                        # schicke "\r"
-                        # schicke "\r"
-
-                    #upload file
-                    print("> Uploading...")
-                    for line in file:
-                        board.write("{}\r".format(line.strip()).encode("utf-8"))
-                        s = board.read_until(expected="#".encode("utf-8")).decode("utf--8")
-                        if len(s) == 0 or s[-1] != "#":
-                            raise Exception("Could not upload file. Please reset and and try again.")
-
-                    #clearing breakpoints
-                    print("> Clearing breakpoints...")
-                    board.write("BK ALL\r".encode("utf-8"))
-                    s = board.read_until(expected="#".encode("utf-8")).decode("utf-8")
-                    if len(s) == 0 or s[-1] != "#":
-                        raise Exception("Could not upload file. Please reset and try again.")
-
-                    # excuting program
-                    print("> Starting...")
-                    board.write("G 8000\r".encode("utf-8"))
-                    s = board.read_until(expected="#".encode("utf-8")).decode("utf-8")
-                    if len(s) == 0 or s[-1] != "#":
-                        raise Exception("Could not start program. Please reset and try again.")
-                    board.write("G\r".encode("utf-8"))
-
-            # handle all other exceptions:
-        except Exception as e:
-            print("> > > ERROR: {}".format(e))
-            exit(1)
-        '''
     def get_register(self):
             PortSent().send("X\r".encode("utf-8"))
 

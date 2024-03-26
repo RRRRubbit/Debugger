@@ -276,7 +276,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_WinControl):
             # print(data)
             num = len(data)
             # 十六进制显示
-            if self.checkBox_3.checkState():
+            if self.checkBox_HexShow.checkState():
                 out_s = ''
                 for i in range(0, len(data)):
                     out_s = out_s + '{:02X}'.format(data[i]) + ' '
