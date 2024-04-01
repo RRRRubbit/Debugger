@@ -3,7 +3,7 @@ import sys
 import binascii
 import time
 import serial
-from PyQt5.QtCore import QTimer, QUrl
+from PyQt5.QtCore import QTimer, QUrl, pyqtSignal
 from PyQt5.QtWidgets import *
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt5.QtWidgets import QApplication, QMainWindow
@@ -19,12 +19,22 @@ from Gui.ui_PortSelect import *
 
 
 class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
-    class SerialManager(QThread):
+
+    def __init__(self, parent=None):
+        super(PortSelectDialog, self).__init__(parent)
+        self.setupUi(self)
+        self.serial_manager = self.SerialManager()  # 实例化SerialManager类
+        # 设置实例
+        self.CreateItems()
+        # 设置信号与槽
+        self.CreateSignalSlot()
+        #Open Serial Port signal
+    class SerialManager(object):
         opened = pyqtSignal()
         closed = pyqtSignal()
 
         def __init__(self, parent=None):
-            super(SerialManager, self).__init__(parent)
+
             self.serial_port = None
 
         def open_port(self, port, baudrate):
@@ -43,16 +53,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             # Your serial port operations here
             pass
 
-    def __init__(self, parent=None):
-        super(PortSelectDialog, self).__init__(parent)
-        self.setupUi(self)
-        self.serial_manager = self.SerialManager()  # 实例化SerialManager类
-        #Open Serial Port signal
 
-        # 设置实例
-        self.CreateItems()
-        # 设置信号与槽
-        self.CreateSignalSlot()
     def openSerialPort(self):
         global serial_is_open
         serial_is_open = True
@@ -240,10 +241,10 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             self.close()  # Accept the close event
 
 #
-# if __name__ == "__main__":
-#     import sys
-#     app = QtWidgets.QApplication(sys.argv)
-#     #PortSelectDialog().listport()
-#     mainWindow = PortSelectDialog()
-#     mainWindow.show()
-#     sys.exit(app.exec_())
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    #PortSelectDialog().listport()
+    mainWindow = PortSelectDialog()
+    mainWindow.show()
+    sys.exit(app.exec_())
