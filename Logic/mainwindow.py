@@ -15,26 +15,32 @@ from PyQt5.QtSerialPort import QSerialPortInfo, QSerialPort
 serial_is_open = False
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     sign_one = pyqtSignal(str)
-
+    trigger_PortSent = pyqtSignal()
     global hexfile_dir
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
-
+        self.actionOpen_Port.triggered.connect(self.PortSent_show)
         self.actionUpdateregister.triggered.connect(self.get_register)
         self.actionOpen.triggered.connect(self.gethex)
         self.actionLoad.triggered.connect(self.upload)
         self.actionStep_Run.triggered.connect(self.set_register)
 
 
-        def PortSelect_show():
-            ps = PortSelectDialog()
-            ps.exec()
+    def PortSent_show(self):
+        # 创建子窗口实例
+        PortSelectDialog = PortSelectDialog()
+        # 将信号连接到子窗口的槽函数
+        self.trigger_PortSent.connect(PortSelectDialog.handle_signal)
+        # 显示子窗口
+        PortSelectDialog.show()
+        # 发出信号，触发子窗口的槽函数
+        self.trigger_PortSent.emit()
             #ps.closeEvent()
-        def BreakPointDialog_show():
-            bk = BreakPointDialog()
-            bk.show()
+    def BreakPointDialog_show():
+        bk = BreakPointDialog()
+        bk.show()
         self.actionMake_BreakPoint.triggered.connect(BreakPointDialog_show)
         self.actionList_Port.triggered.connect(PortSelect_show)
     def gethex(self):
