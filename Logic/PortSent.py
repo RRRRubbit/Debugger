@@ -1,6 +1,7 @@
 import re
 import sys
 import binascii
+import threading
 import time
 import serial
 import serial.tools.list_ports
@@ -10,19 +11,12 @@ from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtCore import QThread
-
 #from Gui.ui_BreakPointDialog import *
 #from Gui.ui_MainWindow import *
 from Gui.ui_PortSelect import *
 #from Logic.mainwindow import *
-
-
-
-
 class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
-    opened = pyqtSignal()
-    closed = pyqtSignal()
-    readyRead = pyqtSignal()
+    text_receive=pyqtSignal(str)
     def __init__(self, parent=None):
         super(PortSelectDialog, self).__init__(parent)
         self.setupUi(self)
@@ -30,31 +24,6 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         self.CreateItems()
         # 设置信号与槽
         self.CreateSignalSlot()
-    def SerialManager(self):
-        # 创建串口实例
-        #def __init__(self, parent=None):
-            #super().__init__(parent)
-        def open_port():
-            if not self.com or not self.com.isOpen():
-                #self.com = serial.Serial(port, baudrate)
-                #self.com.open()
-                self.opened.emit()
-                print("Serial port opened")
-        def close_port():
-            if not self.com or not self.com.isOpen()():
-                self.com.close()
-                self.closed.emit()
-                print("Serial port closed")
-
-        def run():
-            while True:
-                if self.com and self.com.is_open:
-                    data = self.com.read_all()
-                    if data:
-                        self.readyRead.emit()
-            pass
-
-
     def openSerialPort(self):
         global serial_is_open
         serial_is_open = True
@@ -62,12 +31,11 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     def CreateItems(self):
         #Qt 串口类
         #self.com = QSerialPort()
-        # # serial串口类
+        #serial串口类
         self.com = serial.Serial()
         # Qt 定时器类
         # 创建串口管理器实例
         #self.serial_manager = self.SerialManager()
-
         self.timer = QTimer(self)  # 初始化一个定时器
         self.timer.timeout.connect(self.ShowTime)  # 计时结束调用operate()方法
         self.timer.start(100)  # 设置计时间隔 100ms 并启动
@@ -85,13 +53,87 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     # 显示时间
     def ShowTime(self):
         self.label_Time.setText(time.strftime("%B %d, %H:%M:%S", time.localtime()))
+    def run_code(self):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return False
+        else:
+            self.com.write("G 8000\r".encode("utf-8"))
+            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            if len(s) == 0 or s[-1] != "#":
+                raise Exception("Could not start program. Please reset and try again.")
+            self.com.write("G\r".encode("utf-8"))
+            return
+    def run_step_code(self):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return False
+        else:
+            self.com.write("T\r".encode("utf-8"))
+            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            if len(s) == 0 or s[-1] != "#":
+                raise Exception("Could not start program. Please reset and try again.")
+            return
+    def run_step_function_code(self):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return False
+        else:
+            self.com.write("P\r".encode("utf-8"))
+            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            if len(s) == 0 or s[-1] != "#":
+                raise Exception("Could not start program. Please reset and try again.")
+            return
+    def get_register(self):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return
+        self.com.write("X\r".encode("utf-8"))
+        s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+        print(s)
+        print(self.text_receive)
+        #self.text_receive = s
+        if len(s) == 0 or s[-1] != "#":
+            raise Exception("Could not get registers. Please reset and try again.")
+        else:
+            self.text_receive.emit(s)
+        return s
+    # 串口发送文件数据
+    def send_from_hex_file(self):
+        # From disk open file format（*.hex），return dir
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+        global hexfile_dir
+        s, _ = QFileDialog.getOpenFileName(None, 'Open a hex file', 'C:\\', 'hex files (*.hex)')
+        hexfile_dir = s
+        # print(hexfile_dir)
+        if hexfile_dir == None:
+            print("> > > Successful: File '{}' is not found".format(hexfile_dir))
+        else:
+            print("Successful: File '{}' is open".format(hexfile_dir))
+        # 打开hex文件
+        with open(hexfile_dir, 'r') as f:
+            # 逐行读取hex文件内容
+            for line in f:
+                # 发送每一行数据（假设每一行都是有效的十六进制数据）
+                self.com.write("{}\r".format(line.strip()).encode("utf-8"))
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf--8")
+                # 延时一段时间（根据需要调整）
+                if len(s) == 0 or s[-1] != "#":
+                    raise Exception("Could not upload file. Please reset and and try again.")
+                time.sleep(0.1)
+        # upload hex-file to labborad
+        return hexfile_dir
 
     # 串口发送数据
-    def Com_Send_Data(self):
+    def Com_Send_Data(self, message=None):
         txData = self.textEdit_Send.toPlainText()
-        if len(txData) == 0:
+        if len(txData) == 0 and message == None:
             return
-        if self.checkBox_HexSend.isChecked() == False:
+        elif len(txData) == 0 and message != None:
+            self.com.write(message.encode('UTF-8'))
+            return
+        elif self.checkBox_HexSend.isChecked() == False:
             self.com.write(txData.encode('UTF-8'))
         else:
             Data = txData.replace(' ', '')
@@ -113,37 +155,31 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 QMessageBox.critical(self, 'Abnormal', 'Hexadecimal sending error')
                 return
 
-    def send_from_hex_file(self, hex_file_path):
-        # 打开hex文件
-        with open(hex_file_path, 'r') as f:
-            # 逐行读取hex文件内容
-            for line in f:
-                # 发送每一行数据（假设每一行都是有效的十六进制数据）
-                self.com.write(bytes.fromhex(line.strip()))
-                # 延时一段时间（根据需要调整）
-                time.sleep(0.1)
-
-
     # 串口接收数据
     def Com_Receive_Data(self):
-
-        try:
-            rxData = bytes(self.com.read_all())
-        except:
-            QMessageBox.critical(self, 'Fatal error', 'The serial port received the wrong data')
-        if self.checkBox_HexShow.isChecked() == False:
+        if self.com.is_open == True:
             try:
-                self.textEdit_Receive.insertPlainText(rxData.decode('UTF-8'))
+                rxData = bytes(self.com.read_all())
             except:
-                pass
+                QMessageBox.critical(self, 'Fatal error', 'The serial port received the wrong data')
+            if self.checkBox_HexShow.isChecked() == False:
+                try:
+                    self.textEdit_Receive.insertPlainText(rxData.decode('UTF-8'))
+                except:
+                    pass
+            elif self.checkBox_HexShow.isChecked() == True and rxData !=b'' :
+                Data = binascii.b2a_hex(rxData).decode('ascii')
+                # re 正则表达式 (.{2}) 匹配两个字母
+                hexStr = ' 0x'.join(re.findall('(.{2})', Data))
+                # 补齐第一个 0x
+                hexStr = '0x' + hexStr
+                self.textEdit_Receive.insertPlainText(hexStr)
+                self.textEdit_Receive.insertPlainText(' ')
+            elif rxData == b'':
+                return None
         else:
-            Data = binascii.b2a_hex(rxData).decode('ascii')
-            # re 正则表达式 (.{2}) 匹配两个字母
-            hexStr = ' 0x'.join(re.findall('(.{2})', Data))
-            # 补齐第一个 0x
-            hexStr = '0x' + hexStr
-            self.textEdit_Receive.insertPlainText(hexStr)
-            self.textEdit_Receive.insertPlainText(' ')
+            return None
+
     # 串口刷新
     def Com_Refresh_Button_Clicked(self):
         self.comboBox_PortName.clear()
@@ -170,6 +206,8 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     # 发送按钮按下
     def SendButton_clicked(self):
         self.Com_Send_Data()
+        #SendThread_thread=SendThread()
+        #SendThread_thread.start()
 
     # 串口刷新按钮按下
     def Com_Open_Button_clicked(self):
@@ -218,7 +256,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
 
     def closeEvent(self, event):
         # Check if the serial port is open
-        if self.SerialManager.com and self.SerialManager.com.isOpen():
+        if self.com and self.com.isOpen():
             # Serial port is open, hide the window
             event.ignore()  # Ignore the close event
             QMessageBox.critical(self, 'Warning', 'The serial port is still open', )
