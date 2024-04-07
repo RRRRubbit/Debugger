@@ -16,7 +16,9 @@ from PyQt5.QtCore import QThread
 from Gui.ui_PortSelect import *
 #from Logic.mainwindow import *
 class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
-    text_receive=pyqtSignal(str)
+    text_receive_register=pyqtSignal(str)
+    text_receive_RAM = pyqtSignal(str)
+    text_receive_IO =pyqtSignal(str)
     def __init__(self, parent=None):
         super(PortSelectDialog, self).__init__(parent)
         self.setupUi(self)
@@ -84,19 +86,59 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             if len(s) == 0 or s[-1] != "#":
                 raise Exception("Could not start program. Please reset and try again.")
             return
+    def get_IO(self):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return
+        else:
+            a =''
+            self.com.write("DD 80 80\r".encode("utf-8"))#P0
+            a += self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.com.write("DD 90 90\r".encode("utf-8"))#P1
+            a += self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.com.write("DD a0 a0\r".encode("utf-8"))#P2
+            a += self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.com.write("DD b0 b0\r".encode("utf-8"))#P3
+            a += self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.com.write("DD e8 e8\r".encode("utf-8"))#P4
+            a += self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.com.write("DD f8 f8\r".encode("utf-8"))#P5
+            a += self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            s = a
+            print(s)
+            if len(s) == 0 or s[-1] != "#":
+                raise Exception("Could not get IO. Please reset and try again.")
+            else:
+                self.text_receive_IO.emit(s)
+        return s
     def get_register(self):
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return
-        self.com.write("X\r".encode("utf-8"))
-        s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-        print(s)
-        print(self.text_receive)
-        #self.text_receive = s
-        if len(s) == 0 or s[-1] != "#":
-            raise Exception("Could not get registers. Please reset and try again.")
         else:
-            self.text_receive.emit(s)
+            self.com.write("X\r".encode("utf-8"))
+            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            #print(s)
+            #print(self.text_receive_register)
+            #self.text_receive = s
+            if len(s) == 0 or s[-1] != "#":
+                raise Exception("Could not get registers. Please reset and try again.")
+            else:
+                self.text_receive_register.emit(s)
+        return s
+    def get_RAM(self):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return
+        else:
+            self.com.write("DC 0000 003f\r".encode("utf-8"))
+            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            print(s)
+            print(self.text_receive_RAM)
+            if len(s) == 0 or s[-1] != "#":
+                raise Exception("Could not display program memory area. Please reset and try again.")
+            else:
+                self.text_receive_RAM.emit(s)
         return s
     # 串口发送文件数据
     def send_from_hex_file(self):
