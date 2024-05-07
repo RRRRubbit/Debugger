@@ -27,6 +27,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionUpdateregister.triggered.connect(self.get_register)
         self.actionOpen.triggered.connect(self.PortSelect.send_from_hex_file)
         self.actionRun.triggered.connect(self.PortSelect.run_code)
+        self.actionLoad.triggered.connect(self.get_lst)
        # self.actionLoad.triggered.connect(self.upload)
         self.actionStep_Run.triggered.connect(self.PortSelect.run_step_code)
         self.actionStep_Function_Run.triggered.connect(self.PortSelect.run_step_function_code)
@@ -68,6 +69,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 # self.set_register(self.s)
                 return
         time.sleep(0.1)
+    def get_lst(self):
+        s, _ = QFileDialog.getOpenFileName(None, 'Open a hex file', 'C:\\', 'lst files (*.lst)')
+        global hexfile_dir
+        hexfile_dir = s
+        a=open(hexfile_dir, 'r').readlines()
+        self.listWidget_ASM.addItems(a)
+
+        keyStart = '<Package name="com.tencent.tmgp.sgame">'
+        keyEnd = '</Package>'
+        buff = file.read()
+        pat = re.compile(keyStart + '(.*?)' + keyEnd, re.S)
+        result = pat.findall(buff)
+
     def set_IO(self, message):
         #s=message.split("\r\n#dd")
         s= re.compile(r'D:(.+?)\r\n#')

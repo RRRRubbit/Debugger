@@ -121,26 +121,6 @@
        <widget class="QComboBox" name="comboBox_BaudRate">
         <item>
          <property name="text">
-          <string>1200</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2400</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4000</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4800</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
           <string>9600</string>
          </property>
         </item>
