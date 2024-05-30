@@ -19,6 +19,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     text_receive_register=pyqtSignal(str)
     text_receive_RAM = pyqtSignal(str)
     text_receive_IO =pyqtSignal(str)
+    text_receive_Breakpoint =pyqtSignal(str)
     def __init__(self, parent=None):
         super(PortSelectDialog, self).__init__(parent)
         self.setupUi(self)
@@ -51,6 +52,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         self.timer.timeout.connect(self.Com_Receive_Data)  # 接收数据
         self.checkBox_HexShow.stateChanged.connect(self.hexShowingClicked)
         self.checkBox_HexSend.stateChanged.connect(self.hexSendingClicked)
+
 
     # 显示时间
     def ShowTime(self):
@@ -116,7 +118,8 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return
         else:
-            self.com.write("X\r".encode("utf-8"))
+            self.com.write('X\r'.encode("utf-8"))
+            #self.com.write(0x0D)
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
             #print(s)
             #print(self.text_receive_register)
@@ -126,19 +129,36 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             else:
                 self.text_receive_register.emit(s)
         return s
-    def get_RAM(self):
+    def get_RAM(self, Scroll_Value=None):
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return
         else:
-            self.com.write("DC 0000 003f\r".encode("utf-8"))
-            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-            print(s)
-            print(self.text_receive_RAM)
-            if len(s) == 0 or s[-1] != "#":
-                raise Exception("Could not display program memory area. Please reset and try again.")
+            if Scroll_Value == None :
+                self.com.write("DC 0000 003f\r".encode("utf-8"))
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                print(s)
+                print(self.text_receive_RAM)
+                if len(s) == 0 or s[-1] != "#":
+                    raise Exception("Could not display program memory area. Please reset and try again.")
+                else:
+                    self.text_receive_RAM.emit(s)
             else:
-                self.text_receive_RAM.emit(s)
+                #Scroll_Value=hex(Scroll_Value)
+                start = 0x0000 + Scroll_Value*64 #添加偏移
+                end = 0x003f + Scroll_Value*64
+                start_str = hex(start)[2:] #去掉0x前缀
+                end_str = hex(end)[2:]
+                start_str=start_str.zfill(4)
+                end_str=end_str.zfill(4)
+                self.com.write(("DC"+" "+start_str+" "+end_str+"\r").encode("utf-8"))
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                print(s)
+                print(self.text_receive_RAM)
+                if len(s) == 0 or s[-1] != "#":
+                    raise Exception("Could not display program memory area. Please reset and try again.")
+                else:
+                    self.text_receive_RAM.emit(s)
         return s
     # 串口发送文件数据
     def send_from_hex_file(self):
@@ -149,34 +169,51 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         s, _ = QFileDialog.getOpenFileName(None, 'Open a hex file', 'C:\\', 'hex files (*.hex)')
         hexfile_dir = s
         # print(hexfile_dir)
-        if hexfile_dir == None:
-            print("> > > Successful: File '{}' is not found".format(hexfile_dir))
+        if hexfile_dir == '':
+            print("> > > Worng: File is not found")
         else:
             print("Successful: File '{}' is open".format(hexfile_dir))
         # 打开hex文件
-        with open(hexfile_dir, 'r') as f:
-            # 逐行读取hex文件内容
-            for line in f:
-                # 发送每一行数据（假设每一行都是有效的十六进制数据）
-                self.com.write("{}\r".format(line.strip()).encode("utf-8"))
-                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf--8")
-                # 延时一段时间（根据需要调整）
-                if len(s) == 0 or s[-1] != "#":
-                    raise Exception("Could not upload file. Please reset and and try again.")
-                time.sleep(0.1)
-        # upload hex-file to labborad
+            with open(hexfile_dir, 'r') as f:
+                # 逐行读取hex文件内容
+                for line in f:
+                    # 发送每一行数据（假设每一行都是有效的十六进制数据）
+                    self.com.write("{}\r".format(line.strip()).encode("utf-8"))
+                    s = self.com.read_until(expected="#".encode("utf-8")).decode("utf--8")
+                    # 延时一段时间（根据需要调整）
+                    if len(s) == 0 or s[-1] != "#":
+                        raise Exception("Could not upload file. Please reset and and try again.")
+                    time.sleep(0.1)
+            # upload hex-file to labborad
+            return None
         return hexfile_dir
-
+    def Set_Breakpoint(self, BP_signal=None):
+        if BP_signal == '':
+            #QMessageBox.critical(self, 'Warning', 'Breakpoint is not defined', )
+            return None
+        else:
+            self.Com_Send_Data("BS "+BP_signal)
+    def Read_Breakpoint(self, BP_startread_signal=None):
+        if BP_startread_signal == '':
+            #QMessageBox.critical(self, 'Warning', '', )
+            return None
+        else:
+            self.Com_Send_Data('BL')
+            text_receive_Breakpoint=self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.text_receive_Breakpoint.emit(text_receive_Breakpoint)
     # 串口发送数据
     def Com_Send_Data(self, message=None):
         txData = self.textEdit_Send.toPlainText()
         if len(txData) == 0 and message == None:
             return
         elif len(txData) == 0 and message != None:
+            #message=message+"\r"
             self.com.write(message.encode('UTF-8'))
             return
         elif self.checkBox_HexSend.isChecked() == False:
+
             self.com.write(txData.encode('UTF-8'))
+            self.com.write('\r'.encode('UTF-8'))
         else:
             Data = txData.replace(' ', '')
             # 如果16进制不是偶数个字符, 去掉最后一个, [ ]左闭右开

@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import re
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QAction, QFileDialog
 from PyQt5.QtCore import  *
@@ -16,6 +18,7 @@ serial_is_open = False
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     sign_one = pyqtSignal(str)
     trigger_PortSent = pyqtSignal()
+    ScrollBar_RAM = pyqtSignal(int)
     global hexfile_dir
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -34,10 +37,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionUpdate_RAM.triggered.connect(self.get_RAM)
         self.actionUpdate_Port.triggered.connect(self.get_IO)
         self.actionMake_BreakPoint.triggered.connect(self.BreakPointDialog_show)
+        self.actionMake_BreakPoint.triggered.connect(self.BreakPoint.read_BreakPoints)
         self.actionClean_All_Break_Point.triggered.connect(self.clean_all_break_point)
+        # Breakpoint model signal connect
         self.PortSelect.text_receive_register.connect(self.set_register)
         self.PortSelect.text_receive_RAM.connect(self.set_RAM)
         self.PortSelect.text_receive_IO.connect(self.set_IO)
+        self.verticalScrollBar_RAM.sliderReleased.connect(self.get_ScrollBar)
+        self.ScrollBar_RAM.connect(self.PortSelect.get_RAM)
+        self.PortSelect.text_receive_Breakpoint.connect(self.BreakPoint.set_BreakPoints_text)
+        #Breakpoint model signal connect
+        self.BreakPoint.BP_signal.connect(self.PortSelect.Set_Breakpoint)
+        self.BreakPoint.BP_startread_signal.connect(self.PortSelect.Read_Breakpoint)
 
     def CreateItems(self):
         self.PortSelect = PortSelectDialog()
@@ -70,22 +81,43 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 return
         time.sleep(0.1)
     def get_lst(self):
-        s, _ = QFileDialog.getOpenFileName(None, 'Open a hex file', 'C:\\', 'lst files (*.lst)')
-        global hexfile_dir
-        hexfile_dir = s
-        a=open(hexfile_dir, 'r').readlines()
-        self.listWidget_ASM.addItems(a)
+        s, _ = QFileDialog.getOpenFileName(None, 'Open a lst file', 'D:\\', 'lst files (*.lst)')
+        global lstfile_dir
+        lstfile_dir = s
+        with open(lstfile_dir, 'r') as f:
+            lst_content = f.read()
+        #pattern = re.compile(r'^(\s*[\w\$]+:)?\s*([^\r\n;]*)', re.MULTILINE)
 
-        keyStart = '<Package name="com.tencent.tmgp.sgame">'
-        keyEnd = '</Package>'
-        buff = file.read()
-        pat = re.compile(keyStart + '(.*?)' + keyEnd, re.S)
-        result = pat.findall(buff)
+        address_pattern = re.compile(r'\s+\d+/(.+?);', re.MULTILINE)
 
+        # 提取地址和内容
+        addresses = address_pattern.findall(lst_content)
+        # 输出匹配结果
+        lines = addresses
+        address_lines = {}
+
+        # 遍历每一行
+        for line in lines:
+            parts = line.split(':')
+            address = parts[0].strip()  # 获取地址部分
+            content = parts[1].strip() if len(parts) > 1 else ''  # 获取内容部分（如果有）
+            address_lines[address] = content  # 更新字典
+
+        # 输出结果
+        for address, content in address_lines.items():
+            address=address.zfill(4) #补全4位十六进制
+            memory=address+' : '+content
+            self.listWidget_ASM.addItem(memory)
+
+        if lstfile_dir == None:
+            print("> > > Successful: File '{}' is not found".format(lstfile_dir))
+        else:
+            print("Successful: File '{}' is open".format(lstfile_dir))
+        return lstfile_dir
     def set_IO(self, message):
         #s=message.split("\r\n#dd")
-        s= re.compile(r'D:(.+?)\r\n#')
-        c=s.findall(message)
+        pattern= re.compile(r'D:(.+?)\r\n#')
+        c=pattern.findall(message)
         i = 0
         P = ['P0=', 'P1=', 'P2=', 'P3=', 'P4=', 'P5=']
         d = ''
@@ -134,9 +166,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         time.sleep(0.1)
     def set_register(self, message):
         # message=self.PortSelect.text_receive
-        message = message[:-1]
+        message = message[:-1]#去掉#
+        message = message[3:]#去掉X\r\n
         message.replace('\r', '')
-        self.label.setText(message)
+        self.label_Reg.setText(message)
         return message
     #def register_value= a
     #return register_value
@@ -146,13 +179,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             #s = PortSelectDialog.(expected="#".encode("utf-8")).decode("utf-8")
             #if len(s) == 0 or s[-1] != "#":
                 #raise Exception("Could not make breakpoint. Please reset and try again.")
+
+    def get_ScrollBar(self):
+        s = self.verticalScrollBar_RAM.sliderPosition() #获取进度条信息
+        self.ScrollBar_RAM.emit(s)
     def get_RAM(self):
         s = self.PortSelect.get_RAM()
         if s == "":
             QMessageBox.warning(self,"Warning","Could not get all register. Please check the connection.")
             return
         elif s !="":
-            #s = "RA RB R0 R1 R2 R3 R4 R5 R6 R7 PSW DPTR SP PC<\r><\n>FF FF FF FF FF FF FF FF FF FF ---R0--- 0000 07 0000 <\r><\n>"
             if len(s) == 0 or s[-1] != "#":
                 QMessageBox.warning(self,"Warning","Could not get all register. Please check the connection.")
             else:
@@ -184,20 +220,25 @@ C:0120: 18 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 #
         )
         '''
-        s = s.replace('C:','')
-        b = '-'
-        c=str.splitlines(s)
+        s = s.replace('C:','') #去掉C
+        bar = '-' #添加分隔符
+        star = '|'
+        c=str.splitlines(s) #把数列列表分割成字符串
+        c=c[1:]#去掉指令部分
         d = ''
         e = '\r\n'
         for line in c:
             #print(line)
-            line = line.split()
+            line = line.split() #分割字符串成单个字节
             line_list = list(line)
-            line_list.insert(7,b)
-            line = ' '.join(line_list)
-            d = d+line+e
+            ascii_list = [chr(int(hex_str, 16)) for hex_str in line_list[1:]]
+            line_list.insert(9,bar) #添加分隔符
+            line_hex = ' '.join(line_list)
+            line_ascii = ''.join(ascii_list)
+            d = d+line_hex+' '+star+line_ascii+star+e
             #print(d)
         print(d)
+        print(ascii_list)
         self.label_RAM.setText(d)
         return s
 

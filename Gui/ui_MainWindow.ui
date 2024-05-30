@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>640</height>
+    <height>645</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -43,20 +43,20 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>802</width>
-      <height>618</height>
+      <width>791</width>
+      <height>598</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout_top">
-     <item row="2" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_ASM_Port">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QListWidget" name="listWidget_ASM"/>
-       </item>
-       <item>
-        <widget class="QScrollBar" name="verticalScrollBar_ASM">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+        <widget class="QListWidget" name="listWidget_ASM">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>400</height>
+          </size>
          </property>
         </widget>
        </item>
@@ -65,6 +65,12 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
+           <height>300</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
            <height>300</height>
           </size>
          </property>
@@ -101,152 +107,54 @@ P5 = 10111101
        </item>
       </layout>
      </item>
-     <item row="1" column="0">
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_Reg">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>RA RB R0 R1 R2 R3 R4 R5 R6 R7    PSW      DPTR  SP   PC
+00 00 00 00 0C 38 4F 80 00 8A  ---R0---  0000  07  0000
+</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="2" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout_RAM">
        <item>
-        <widget class="QScrollArea" name="scrollArea_RAM">
+        <widget class="QLabel" name="label_RAM">
          <property name="minimumSize">
           <size>
-           <width>797</width>
-           <height>200</height>
+           <width>0</width>
+           <height>100</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>790</width>
-           <height>5000</height>
-          </size>
-         </property>
-         <property name="baseSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="verticalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOn</enum>
-         </property>
-         <property name="horizontalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
-         </property>
-         <property name="sizeAdjustPolicy">
-          <enum>QAbstractScrollArea::AdjustToContents</enum>
-         </property>
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_RAM">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>790</width>
-            <height>4000</height>
-           </rect>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>790</width>
-            <height>4000</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>790</width>
-            <height>5000</height>
-           </size>
-          </property>
-          <widget class="QLabel" name="label_RAM">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>780</width>
-             <height>5000</height>
-            </rect>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>780</width>
-             <height>4000</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>780</width>
-             <height>5000</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>0000: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0010: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0020: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0030: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0040: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0050: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0060: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0070: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0080: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-0090: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-00A0: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-00B0: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-00C0: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00
-00D0: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00
-00E0: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00
-</string>
-           </property>
-           <property name="textFormat">
-            <enum>Qt::AutoText</enum>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="0">
-      <layout class="QVBoxLayout" name="verticalLayout_Reg">
-       <item>
-        <widget class="QLabel" name="label">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>80</height>
+           <width>16777215</width>
+           <height>100</height>
           </size>
          </property>
          <property name="font">
@@ -257,20 +165,28 @@ P5 = 10111101
           </font>
          </property>
          <property name="text">
-          <string>RA RB R0 R1 R2 R3 R4 R5 R6 R7    PSW      DPTR  SP   PC
-00 00 00 00 0C 38 4F 80 00 8A  ---R0---  0000  07  0000
+          <string>C:0000: 01 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
+C:0010: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
+C:0020: 03 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
+C:0030: 04 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
 </string>
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QScrollBar" name="verticalScrollBar_RAM">
+         <property name="maximum">
+          <number>1023</number>
+         </property>
+         <property name="singleStep">
+          <number>1</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
       </layout>
-     </item>
-     <item row="3" column="0">
-      <widget class="Line" name="line_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
      </item>
     </layout>
    </widget>
@@ -281,7 +197,7 @@ P5 = 10111101
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -342,7 +258,7 @@ P5 = 10111101
   </action>
   <action name="actionOpen">
    <property name="text">
-    <string>Open File</string>
+    <string>Open Hex File</string>
    </property>
   </action>
   <action name="actionRecent_File">
@@ -352,7 +268,7 @@ P5 = 10111101
   </action>
   <action name="actionLoad">
    <property name="text">
-    <string>Load File</string>
+    <string>Load Lst File</string>
    </property>
   </action>
   <action name="actionMake_BreakPoint">

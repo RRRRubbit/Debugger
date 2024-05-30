@@ -5,29 +5,86 @@ from Gui.ui_MainWindow import *
 from Logic.PortSent import *
 
 class BreakPointDialog(QtWidgets.QDialog, Ui_Dialog):
+    BP_signal=pyqtSignal(str)
+    BP_startread_signal = pyqtSignal(str)
     def __init__(self, parent=None):
         super(BreakPointDialog, self).__init__(parent)
         self.setupUi(self)
+        # 设置实例
+        self.CreateItems()
+        # 设置信号与槽
+        self.CreateSignalSlot()
        # self.cleanAllBreakPoints()
-    # 连接语句
-        self.lineEdit_00.returnPressed.connect(lambda current_text: self.textChanged_func(current_text))
-        #self.lineEdit_00.setInputMask('HHHH;_'),self.lineEdit_01.setInputMask('HHHH;_'),self.lineEdit_02.setInputMask('HHHH;_')
-    # 槽函数
-    def cleanAllBreakPoints(self):
-        PortSent.send(self,"bk1\n")
+
+    def CreateItems(self):
         return
 
-    def textChanged_func(self, current_text):
-        print("文本框内容变化信号", current_text)
-        self.textBrowser.append("文本框内容变化信号" + current_text + '\n')
+    def CreateSignalSlot(self):
+        # 连接语句
+        self.buttonBox.accepted.connect(self.set_BreakPoints)
+        # self.lineEdit_00.setInputMask('HHHH;_'),self.lineEdit_01.setInputMask('HHHH;_'),self.lineEdit_02.setInputMask('HHHH;_')
+
+    # 槽函数
+    def cleanAllBreakPoints(self):
+        PortSent.send(self,"bk all\n")
+        return
+    def set_BreakPoints(self):
+        BP = {}
+        BP[0]=self.lineEdit_00.text()
+        BP[1]=self.lineEdit_01.text()
+        BP[2]=self.lineEdit_02.text()
+        BP[3]=self.lineEdit_03.text()
+        BP[4]=self.lineEdit_04.text()
+        BP[5]=self.lineEdit_05.text()
+        BP[6]=self.lineEdit_06.text()
+        BP[7]=self.lineEdit_07.text()
+        BP[8]=self.lineEdit_08.text()
+        BP[9]=self.lineEdit_09.text()
+
+            #BP_address=BP_0
+        for i in range(0,9):
+            self.BP_signal.emit(BP[i])
+    def read_BreakPoints(self):
+        signal_s='start read Breakpoint'
+        self.BP_startread_signal.emit(signal_s)
+
+
+        return
+    def set_BreakPoints_text(self, current_text):
+        if current_text == '':
+            #QMessageBox.critical(self, 'Warning', '', )
+            return None
+        else:
+            lines = current_text.strip().split('\r\n')
+            lines = [line for line in lines if line and not line.startswith('#')]
+            current_text = [line.split(':')[1] for line in lines if ':' in line]
+
+            for i, text_widget in enumerate([self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
+                                             self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
+                                             self.lineEdit_08, self.lineEdit_09], start=0):
+                if i < len(current_text) and current_text[i]:  # 检查索引是否有效且值非空
+                    text_widget.setText(current_text[i])
+                    # 否则不执行赋值操作，text_widget将保持其当前值或默认值
+
+            # self.lineEdit_00.text = current_text[0]
+            # self.lineEdit_01.text = current_text[1]
+            # self.lineEdit_02.text = current_text[2]
+            # self.lineEdit_03.text = current_text[3]
+            # self.lineEdit_04.text = current_text[4]
+            # self.lineEdit_05.text = current_text[5]
+            # self.lineEdit_06.text = current_text[6]
+            # self.lineEdit_07.text = current_text[7]
+            # self.lineEdit_08.text = current_text[8]
+            # self.lineEdit_09.text = current_text[9]
+
 
 #
 #
-# if __name__ == "__main__":
-#     import sys
-#     app = QtWidgets.QApplication(sys.argv)
-#     mainWindow = BreakPointDialog()
-#     mainWindow.show()
-#     sys.exit(app.exec_())
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    mainWindow = BreakPointDialog()
+    mainWindow.show()
+    sys.exit(app.exec_())
 
 
