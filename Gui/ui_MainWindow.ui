@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>645</height>
+    <height>652</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -58,6 +58,13 @@
            <height>400</height>
           </size>
          </property>
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
         </widget>
        </item>
        <item>
@@ -76,6 +83,7 @@
          </property>
          <property name="font">
           <font>
+           <family>Courier New</family>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
@@ -83,17 +91,17 @@
           </font>
          </property>
          <property name="text">
-          <string>P0 = 10111101
+          <string>P0 = 00000000
 
-P1 = 10111101
+P1 = 00000000
 
-P2 = 10111101
+P2 = 00000000
 
-P3 = 10111101
+P3 = 00000000
 
-P4 = 10111101
+P4 = 00000000
 
-P5 = 10111101
+P5 = 00000000
 
 </string>
          </property>
@@ -129,15 +137,15 @@ P5 = 10111101
        </property>
        <property name="font">
         <font>
+         <family>Courier New</family>
          <pointsize>12</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
        </property>
        <property name="text">
-        <string>RA RB R0 R1 R2 R3 R4 R5 R6 R7    PSW      DPTR  SP   PC
-00 00 00 00 0C 38 4F 80 00 8A  ---R0---  0000  07  0000
-</string>
+        <string>RA RB R0 R1 R2 R3 R4 R5 R6 R7    PSW     DPTR  SP   PC
+00 00 00 00 00 00 00 00 00 00  ---R0---  0000  00  0000</string>
        </property>
       </widget>
      </item>
@@ -159,27 +167,40 @@ P5 = 10111101
          </property>
          <property name="font">
           <font>
+           <family>Courier New</family>
            <pointsize>12</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
          <property name="text">
-          <string>C:0000: 01 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-C:0010: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-C:0020: 03 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-C:0030: 04 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
-</string>
+          <string>0000: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00
+0010: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00
+0020: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00
+0030: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QScrollBar" name="verticalScrollBar_RAM">
+         <property name="font">
+          <font>
+           <family>Courier New</family>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="maximum">
           <number>1023</number>
          </property>
          <property name="singleStep">
           <number>1</number>
+         </property>
+         <property name="pageStep">
+          <number>10</number>
+         </property>
+         <property name="sliderPosition">
+          <number>0</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -280,15 +301,24 @@ C:0030: 04 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5
    <property name="text">
     <string>Run</string>
    </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
   </action>
   <action name="actionStep_Run">
    <property name="text">
     <string>Step Run</string>
    </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
   </action>
   <action name="actionStep_Function_Run">
    <property name="text">
     <string>Step Function Run</string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
    </property>
   </action>
   <action name="actionUpdateregister">

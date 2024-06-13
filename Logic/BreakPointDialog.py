@@ -26,9 +26,11 @@ class BreakPointDialog(QtWidgets.QDialog, Ui_Dialog):
 
     # 槽函数
     def cleanAllBreakPoints(self):
-        PortSent.send(self,"bk all\n")
+        self.BP_signal.emit('BPclean')
         return
     def set_BreakPoints(self):
+        self.cleanAllBreakPoints()
+
         BP = {}
         BP[0]=self.lineEdit_00.text()
         BP[1]=self.lineEdit_01.text()
@@ -56,15 +58,21 @@ class BreakPointDialog(QtWidgets.QDialog, Ui_Dialog):
             return None
         else:
             lines = current_text.strip().split('\r\n')
-            lines = [line for line in lines if line and not line.startswith('#')]
-            current_text = [line.split(':')[1] for line in lines if ':' in line]
-
-            for i, text_widget in enumerate([self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
-                                             self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
-                                             self.lineEdit_08, self.lineEdit_09], start=0):
-                if i < len(current_text) and current_text[i]:  # 检查索引是否有效且值非空
-                    text_widget.setText(current_text[i])
-                    # 否则不执行赋值操作，text_widget将保持其当前值或默认值
+            if 'ERROR' in lines[1]:#判断是否有ERROR
+                QMessageBox.critical(self,'Error Address set','Error')
+            else:
+                lines = [line for line in lines if line and not line.startswith('#')]
+                current_text = [line.split(':')[1] for line in lines if ':' in line]
+                for i in range(len(current_text)):
+                    current_Address = current_text[i]
+                    if current_Address:
+                        current_text[i] = current_Address[-4:]
+                for i, text_widget in enumerate([self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
+                                                 self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
+                                                 self.lineEdit_08, self.lineEdit_09], start=0):
+                    if i < len(current_text) and current_text[i]:  # 检查索引是否有效且值非空
+                        text_widget.setText(current_text[i])
+                        # 否则不执行赋值操作，text_widget将保持其当前值或默认值
 
             # self.lineEdit_00.text = current_text[0]
             # self.lineEdit_01.text = current_text[1]

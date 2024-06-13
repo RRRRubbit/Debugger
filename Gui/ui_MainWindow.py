@@ -16,7 +16,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowModality(QtCore.Qt.WindowModal)
         MainWindow.setEnabled(True)
-        MainWindow.resize(800, 645)
+        MainWindow.resize(800, 652)
         MainWindow.setMaximumSize(QtCore.QSize(1200, 900))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setMinimumSize(QtCore.QSize(800, 600))
@@ -32,12 +32,18 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.listWidget_ASM = QtWidgets.QListWidget(self.gridLayoutWidget)
         self.listWidget_ASM.setMaximumSize(QtCore.QSize(16777215, 400))
+        font = QtGui.QFont()
+        font.setFamily("Courier New")
+        font.setBold(True)
+        font.setWeight(75)
+        self.listWidget_ASM.setFont(font)
         self.listWidget_ASM.setObjectName("listWidget_ASM")
         self.horizontalLayout.addWidget(self.listWidget_ASM)
         self.label_Port = QtWidgets.QLabel(self.gridLayoutWidget)
         self.label_Port.setMinimumSize(QtCore.QSize(0, 300))
         self.label_Port.setMaximumSize(QtCore.QSize(16777215, 300))
         font = QtGui.QFont()
+        font.setFamily("Courier New")
         font.setPointSize(10)
         font.setBold(True)
         font.setWeight(75)
@@ -57,6 +63,7 @@ class Ui_MainWindow(object):
         self.label_Reg.setMinimumSize(QtCore.QSize(0, 80))
         self.label_Reg.setMaximumSize(QtCore.QSize(16777215, 80))
         font = QtGui.QFont()
+        font.setFamily("Courier New")
         font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
@@ -69,6 +76,7 @@ class Ui_MainWindow(object):
         self.label_RAM.setMinimumSize(QtCore.QSize(0, 100))
         self.label_RAM.setMaximumSize(QtCore.QSize(16777215, 100))
         font = QtGui.QFont()
+        font.setFamily("Courier New")
         font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
@@ -76,8 +84,15 @@ class Ui_MainWindow(object):
         self.label_RAM.setObjectName("label_RAM")
         self.horizontalLayout_RAM.addWidget(self.label_RAM)
         self.verticalScrollBar_RAM = QtWidgets.QScrollBar(self.gridLayoutWidget)
+        font = QtGui.QFont()
+        font.setFamily("Courier New")
+        font.setBold(True)
+        font.setWeight(75)
+        self.verticalScrollBar_RAM.setFont(font)
         self.verticalScrollBar_RAM.setMaximum(1023)
         self.verticalScrollBar_RAM.setSingleStep(1)
+        self.verticalScrollBar_RAM.setPageStep(10)
+        self.verticalScrollBar_RAM.setSliderPosition(0)
         self.verticalScrollBar_RAM.setOrientation(QtCore.Qt.Vertical)
         self.verticalScrollBar_RAM.setObjectName("verticalScrollBar_RAM")
         self.horizontalLayout_RAM.addWidget(self.verticalScrollBar_RAM)
@@ -158,27 +173,25 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Debugger 51"))
-        self.label_Port.setText(_translate("MainWindow", "P0 = 10111101\n"
+        self.label_Port.setText(_translate("MainWindow", "P0 = 00000000\n"
 "\n"
-"P1 = 10111101\n"
+"P1 = 00000000\n"
 "\n"
-"P2 = 10111101\n"
+"P2 = 00000000\n"
 "\n"
-"P3 = 10111101\n"
+"P3 = 00000000\n"
 "\n"
-"P4 = 10111101\n"
+"P4 = 00000000\n"
 "\n"
-"P5 = 10111101\n"
+"P5 = 00000000\n"
 "\n"
 ""))
-        self.label_Reg.setText(_translate("MainWindow", "RA RB R0 R1 R2 R3 R4 R5 R6 R7    PSW      DPTR  SP   PC\n"
-"00 00 00 00 0C 38 4F 80 00 8A  ---R0---  0000  07  0000\n"
-""))
-        self.label_RAM.setText(_translate("MainWindow", "C:0000: 01 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5\n"
-"C:0010: 02 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5\n"
-"C:0020: 03 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5\n"
-"C:0030: 04 00 03 75 E8 FE 78 14 11 13 D8 FC E5 E8 23 F5\n"
-""))
+        self.label_Reg.setText(_translate("MainWindow", "RA RB R0 R1 R2 R3 R4 R5 R6 R7    PSW     DPTR  SP   PC\n"
+"00 00 00 00 00 00 00 00 00 00  ---R0---  0000  00  0000"))
+        self.label_RAM.setText(_translate("MainWindow", "0000: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00\n"
+"0010: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00\n"
+"0020: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00\n"
+"0030: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00"))
         self.menu.setTitle(_translate("MainWindow", "File"))
         self.menuRun.setTitle(_translate("MainWindow", "Run"))
         self.menuView.setTitle(_translate("MainWindow", "View"))
@@ -191,8 +204,11 @@ class Ui_MainWindow(object):
         self.actionLoad.setText(_translate("MainWindow", "Load Lst File"))
         self.actionMake_BreakPoint.setText(_translate("MainWindow", "Make BreakPoint"))
         self.actionRun.setText(_translate("MainWindow", "Run"))
+        self.actionRun.setShortcut(_translate("MainWindow", "F5"))
         self.actionStep_Run.setText(_translate("MainWindow", "Step Run"))
+        self.actionStep_Run.setShortcut(_translate("MainWindow", "F6"))
         self.actionStep_Function_Run.setText(_translate("MainWindow", "Step Function Run"))
+        self.actionStep_Function_Run.setShortcut(_translate("MainWindow", "F7"))
         self.actionUpdateregister.setText(_translate("MainWindow", "Updateregister"))
         self.actionUpdate_RAM.setText(_translate("MainWindow", "Update RAM"))
         self.actionUpdate_Port.setText(_translate("MainWindow", "Update Port"))
