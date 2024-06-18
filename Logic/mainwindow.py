@@ -43,6 +43,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionMake_BreakPoint.triggered.connect(self.BreakPointDialog_show)
         self.actionMake_BreakPoint.triggered.connect(self.BreakPoint.read_BreakPoints)
         self.actionClean_All_Break_Point.triggered.connect(self.clean_all_break_point)
+
         # Breakpoint model signal connect
         self.PortSelect.text_receive_register.connect(self.set_register)
         self.PortSelect.text_receive_RAM.connect(self.set_RAM)
@@ -75,8 +76,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def BreakPointDialog_show(self):
         #bk = BreakPointDialog()
         self.BreakPoint.show()
-    def get_IO(self,message=None):
-        if message is None:
+    def get_IO(self):
             s = self.PortSelect.get_IO()
             if s == "":
                 QMessageBox.warning(self, "Warning", "Could not get all ports. Please check the connection.")
@@ -88,20 +88,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 else:
                     # self.set_register(self.s)
                     return
-        if message == 'Run code then get IO':
-            s = self.PortSelect.get_IO()
-            if s == "":
-                QMessageBox.warning(self, "Warning", "Could not get all ports. Please check the connection.")
-                return
-            elif s != "":
-                # s = "P0=1111111\r\nP1=1111111\r\nP2=1111111\r\nP3=1111111\r\nP4=1111111\r\nP5=1111111\r\n"
-                if len(s) == 0 or s[-1] != "#":
-                    QMessageBox.warning(self, "Warning", "Could not get all ports. Please check the connection.")
-                else:
-                    # self.set_register(self.s)
-                    return
-
-        time.sleep(0.1)
     def get_lst(self):
         #Clean ASM Code Zone
         self.listWidget_ASM.clear()
@@ -172,37 +158,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             line_list[1]='{:0>8}'.format(line_list_1_bin)
             line = ''.join(line_list)
             d = d+line+e+e
-        print(d)
+        #print(d)
         self.label_Port.setText(d)
         return d
-    def get_register(self,message=None):
-        if message == None:
-            s = self.PortSelect.get_register()
-            if s == "":
+    def get_register(self):
+        s = self.PortSelect.get_register()
+        if s == "":
+            QMessageBox.warning(self, "Warning", "Could not get all register. Please check the connection.")
+            return
+        elif s != "":
+            # s = "RA RB R0 R1 R2 R3 R4 R5 R6 R7 PSW DPTR SP PC<\r><\n>FF FF FF FF FF FF FF FF FF FF ---R0--- 0000 07 0000 <\r><\n>"
+            if s == None or len(s) == 0 or s[-1] != "#":
                 QMessageBox.warning(self, "Warning", "Could not get all register. Please check the connection.")
+            else:
+                self.get_ProgramCounter(s)
+                # self.set_register(self.s)
                 return
-            elif s != "":
-                # s = "RA RB R0 R1 R2 R3 R4 R5 R6 R7 PSW DPTR SP PC<\r><\n>FF FF FF FF FF FF FF FF FF FF ---R0--- 0000 07 0000 <\r><\n>"
-                if s == None or len(s) == 0 or s[-1] != "#":
-                    QMessageBox.warning(self, "Warning", "Could not get all register. Please check the connection.")
-                else:
-                    self.get_ProgramCounter(s)
-                    # self.set_register(self.s)
-                    return
-            time.sleep(0.1)
-        elif message == 'Run code then get Reg':
-            s = self.PortSelect.get_register()
-            if s == "":
-                QMessageBox.warning(self, "Warning", "Could not get all register. Please check the connection.")
-                return
-            elif s != "":
-                # s = "RA RB R0 R1 R2 R3 R4 R5 R6 R7 PSW DPTR SP PC<\r><\n>FF FF FF FF FF FF FF FF FF FF ---R0--- 0000 07 0000 <\r><\n>"
-                if s == None or len(s) == 0 or s[-1] != "#":
-                    QMessageBox.warning(self, "Warning", "Could not get all register. Please check the connection.")
-                else:
-                    self.get_ProgramCounter(s)
-                    # self.set_register(self.s)
-                    return
 
     def get_ProgramCounter(self, message=None):
         #message = "X\r\nRA RB R0 R1 R2 R3 R4 R5 R6 R7 PSW DPTR SP PC\r\nFF FF FF FF FF FF FF FF FF FF ---R0--- 0000 07 0010 \r\n#"
@@ -216,8 +187,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for part in reversed_parts:
                 if len(part) == 4 and part.isalnum() and part.lower().isalpha() == False:  # 检查是否为4位非字母字符
                     PC= part
+                    #print('PC='+PC+'\n')  # 输出: 0000
                     break
-                    print(PC)  # 输出: 0000
                 else:
                     PC = '0000'
             self.ProgramCounter.emit(PC)
@@ -258,7 +229,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ScrollBar_RAM.emit(s)
     def get_RAM(self):
         Scroll_Value = self.verticalScrollBar_RAM.value()
-        print(Scroll_Value)
+        #print(Scroll_Value)
         s = self.PortSelect.get_RAM(Scroll_Value)
         if s == "":
             QMessageBox.warning(self,"Warning","Could not get all register. Please check the connection.")
@@ -269,7 +240,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 #self.set_register(self.s)
                 return
-        time.sleep(0.1)
+        #time.sleep(0.1)
     def set_RAM(self,message):
         s = message[:-1]# 去掉#
         '''
@@ -303,7 +274,7 @@ C:66F0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
             line_ascii = ''.join(ascii_list)
             d = d + line_hex + ' ' + star + line_ascii + star + e
             #print(d)
-        print(d)
+        #print(d)
         #print(repr(d))
         #print(ascii_list)
         self.label_RAM.setText(d)
