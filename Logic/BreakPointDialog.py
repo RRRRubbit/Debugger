@@ -56,6 +56,17 @@ class BreakPointDialog(QtWidgets.QDialog, Ui_Dialog):
         if current_text == '':
             #QMessageBox.critical(self, 'Warning', '', )
             return None
+        elif current_text == 'BL\r\n#':#if no Breakpoint set
+            # Assuming self.lineEdit_00 to self.lineEdit_09 are defined somewhere in your class
+            line_edits = [
+                self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
+                self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
+                self.lineEdit_08, self.lineEdit_09
+            ]
+
+            for line_edit in line_edits:
+                line_edit.clear()
+
         else:
             lines = current_text.strip().split('\r\n')
             if 'ERROR' in lines[1]:#判断是否有ERROR

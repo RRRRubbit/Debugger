@@ -17,6 +17,7 @@ from PyQt5.QtCore import QThread
 from Gui.ui_PortSelect import *
 #from Logic.mainwindow import *
 
+
 class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     text_receive_register=pyqtSignal(str)
     text_receive_RAM = pyqtSignal(str)
@@ -25,6 +26,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     signal_get_register=pyqtSignal(str)
     signal_get_RAM=pyqtSignal(str)
     signal_get_IO=pyqtSignal(str)
+    signal_status_bar = pyqtSignal(str)
     def __init__(self, parent=None):
         super(PortSelectDialog, self).__init__(parent)
         self.setupUi(self)
@@ -47,6 +49,8 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         self.timer = QTimer(self)  # 初始化一个定时器
         self.timer.timeout.connect(self.ShowTime)  # 计时结束调用operate()方法
         self.timer.start(100)  # 设置计时间隔 100ms 并启动
+        self.receive_thread = Com_Receive_Thread(self.com,self.textEdit_Receive,self.Com_Close_Button_clicked,self.checkBox_HexShow,self.signal_status_bar)
+        self.receive_thread.start()
 
 
     # 设置信号与槽
@@ -55,10 +59,11 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         self.pushButton_ClosePort.clicked.connect(self.Com_Close_Button_clicked)
         self.pushButton_Send.clicked.connect(self.SendButton_clicked)
         self.pushButton_Refresh.clicked.connect(self.Com_Refresh_Button_Clicked)
-        self.timer.timeout.connect(self.Com_Receive_Data)  # 接收数据
+        self.timer.timeout.connect(self.receive_thread.run)  # 接收数据
         self.checkBox_HexShow.stateChanged.connect(self.hexShowingClicked)
         self.checkBox_HexSend.stateChanged.connect(self.hexSendingClicked)
         self.pushButto_Clear.clicked.connect(self.clean_Receive_Zone)
+        #self.receive_thread.data_received.connect(self.receive_thread.display_data)
         ####测试区域
         #self.checkBox_AutoSend.stateChanged.connect(self.progress)
         ####测试区域
@@ -69,13 +74,17 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     def ShowTime(self):
         self.label_Time.setText(time.strftime("%B %d, %H:%M:%S", time.localtime()))
 ####从这里开始补充测试
+
+
+ ####补充测试停止
+#####Upload function###################################################################################################
     def send_from_hex_file(self):
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return
         else:
-
             #设置进度条
+            self.signal_status_bar.emit("Uploading Hex File...Please choose a hex file")
             self.progress_dialog = QProgressDialog('Uploading Hex File...', 'Cancel', 0, 100, self)
             self.progress_dialog.setAutoClose(True)
             self.progress_dialog.setAutoReset(True)
@@ -89,11 +98,13 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             if not self.file_path:
                 QMessageBox.warning(self, "Warning", "No file selected")
                 return
-            #创建线程实例
-            self.upload_thread=UploadThread(self.com, self.file_path)
-            self.upload_thread.progress.connect(self.update_progress)
-            self.upload_thread.finished.connect(self.upload_finished)
-            self.upload_thread.start()
+            else:
+                #创建线程实例
+                self.upload_thread=UploadThread(self.com, self.file_path, self.signal_status_bar)
+                self.upload_thread.progress.connect(self.update_progress)
+                self.upload_thread.display.connect(self.receive_thread.receive_zone_update)
+                self.upload_thread.finished.connect(self.upload_finished)
+                self.upload_thread.start()
     def update_progress(self, value):
         if value == -1:
             QMessageBox.critical(self, "Error", "An error occurred during upload")
@@ -103,26 +114,33 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
 
     def upload_finished(self):
         self.progress_dialog.setValue(100)
+        self.signal_status_bar.emit("Successful: File '{}' is open".format(self.file_path) )
         QMessageBox.information(self, "Success", "Upload finished successfully")
 
+
     def cancel_upload(self):
-        if self.upload_thread.isRunning():
-            self.upload_thread.terminate()
+        if self.upload_thread != None:
+            if self.upload_thread.isRunning():
+                self.upload_thread.terminate()
+        else:
+            return
         self.progress_dialog.reset()
         QMessageBox.warning(self, "Canceled", "Upload canceled")
-
- ####补充测试停止
+######Run code function###################################################################################################
     def run_code(self):
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return False
         else:
+            self.signal_status_bar.emit("Start program excuting")
             self.com.write("G 8000\r".encode("utf-8"))
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.textEdit_Receive.insertPlainText(s)
             if len(s) == 0 or s[-1] != "#":
                 raise Exception("Could not start program. Please reset and try again.")
             self.com.write("BL\r".encode("utf-8"))
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.textEdit_Receive.insertPlainText(s)
             if s == '\r\n#':
                 self.com.write("G\r".encode("utf-8"))
                 QMessageBox.warning(self, "Warning", "Code is running with out BreakPoint")
@@ -130,6 +148,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.com.write("G\r".encode("utf-8"))
                 #QMessageBox.warning(self, "Warning", "Code is running and stop at BreakPoint")
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
                 self.signal_get_register.emit('Run code then get Reg')
                 self.signal_get_IO.emit('Run code then get IO')
                 self.signal_get_RAM.emit('Run code then get RAM')
@@ -139,8 +158,10 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return False
         else:
+            self.signal_status_bar.emit("Start program excuting")
             self.com.write("T\r".encode("utf-8"))
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.textEdit_Receive.insertPlainText(s)
             if len(s) == 0 or s[-1] != "#":
                 raise Exception("Could not start program. Please reset and try again.")
             self.signal_get_register.emit('Run code then get Reg')
@@ -152,14 +173,17 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return False
         else:
+            self.signal_status_bar.emit("Start program excuting")
             self.com.write("P\r".encode("utf-8"))
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.textEdit_Receive.insertPlainText(s)
             if len(s) == 0 or s[-1] != "#":
                 raise Exception("Could not start program. Please reset and try again.")
             self.signal_get_register.emit('Run code then get Reg')
             self.signal_get_IO.emit('Run code then get IO')
             self.signal_get_RAM.emit('Run code then get RAM')
             return
+#####Display infomation fucntion#######################################################################################
     def get_IO(self):
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
@@ -183,6 +207,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             if len(s) == 0 or s[-1] != "#":
                 raise Exception("Could not get IO. Please reset and try again.")
             else:
+                self.signal_status_bar.emit("Getting IO")
                 self.text_receive_IO.emit(s)
         return s
     def get_register(self):
@@ -190,9 +215,11 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 QMessageBox.warning(self, "Warning", "Please Open Serial Port")
                 return
             else:
+                self.signal_status_bar.emit("Getting register")
                 self.com.write('X\r'.encode("utf-8"))
                 #self.com.write(0x0D)
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
                 #print(s)
                 #print(self.text_receive_register)
                 #self.text_receive = s
@@ -207,8 +234,10 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             return
         else:
             if Scroll_Value == None :
+                self.signal_status_bar.emit("Getting RAM")
                 self.com.write("DC 0000 003f\r".encode("utf-8"))
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
                 #print(s)
                 #print(self.text_receive_RAM)
                 if len(s) == 0 or s[-1] != "#":
@@ -225,6 +254,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 end_str=end_str.zfill(4)
                 self.com.write(("DC"+" "+start_str+" "+end_str+"\r").encode("utf-8"))
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
                 #print(s)
                 #print(self.text_receive_RAM)
                 if len(s) == 0 or s[-1] != "#":
@@ -232,30 +262,123 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 else:
                     self.text_receive_RAM.emit(s)
         return s
-
+######Breakpoint function###################################################################################################
     def Set_Breakpoint(self, BP_signal=None):
-        if BP_signal == '':
-            #QMessageBox.critical(self, 'Warning', 'Breakpoint is not defined', )
-            return None
-        elif BP_signal == 'BPclean':
-            self.Com_Send_Data("BK ALL" + '\r')
-            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-            #print(s)
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return "ERROR"
         else:
-            self.Com_Send_Data("BS "+BP_signal+'\r')
-            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-            #print(s)
-    def Read_Breakpoint(self, BP_startread_signal=None):
-        if BP_startread_signal == '':
-            #QMessageBox.critical(self, 'Warning', '', )
-            return None
-        else:
-            if self.com.is_open == False:
-                QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            if BP_signal == '':
+                #QMessageBox.critical(self, 'Warning', 'Breakpoint is not defined', )
+                return None
+            elif BP_signal == 'BPclean':
+                self.Com_Send_Data("BK ALL" + "\r")
+                self.signal_status_bar.emit("Cleaning Breakpoint")
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                print(s)
+                return None
             else:
-                self.Com_Send_Data('BL\r')
-                text_receive_Breakpoint=self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-                self.text_receive_Breakpoint.emit(text_receive_Breakpoint)
+                BP_signal = str(BP_signal)
+                self.signal_status_bar.emit("Setting Breakpoint")
+                self.Com_Send_Data("BS "+BP_signal+"\r")
+                print("set breakpoint at:"+"BS "+BP_signal+"\r")
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                if "ERROR" in s:
+                    QMessageBox.warning(self, "Warning", s)
+                    return s
+                print(s)
+                return None
+    def Remove_Breakpoint(self, BP_signal=None):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return "ERROR"
+        else:
+            if BP_signal == '':
+                #QMessageBox.critical(self, 'Warning', 'Breakpoint is not defined', )
+                return None
+            elif BP_signal == 'BPclean':
+                self.Com_Send_Data("BK ALL" + '\r')
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                if "ERROR" in s:
+                    QMessageBox.warning(self, "Warning", s)
+                print(s)
+                return None
+            else:
+                BP_signal = str(BP_signal)
+                self.signal_status_bar.emit("Cleaning Breakpoint")
+                self.Com_Send_Data("BK "+BP_signal+'\r')
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                if "ERROR" in s:
+                    QMessageBox.warning(self, "Warning", s)
+                    return s
+                print(s)
+                return None
+    def Enable_Breakpoint(self, BP_signal=None):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return "ERROR"
+        else:
+            if BP_signal == '':
+                return None
+            elif BP_signal == 'BPclean':
+                self.Com_Send_Data("BK ALL" + '\r')
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                if "ERROR" in s:
+                    QMessageBox.warning(self, "Warning", s)
+                    return s
+                print(s)
+                return None
+            else:
+                BP_signal = str(BP_signal)
+                self.signal_status_bar.emit("Making Breakpoint Enable")
+                self.Com_Send_Data("BE " + BP_signal + '\r')
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                if "ERROR" in s:
+                    QMessageBox.warning(self, "Warning", s)
+                    return s
+                print(s)
+                return None
+    def Disable_Breakpoint(self, BP_signal=None):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return "ERROR"
+        else:
+            if BP_signal == '':
+                return None
+            else:
+                BP_signal = str(BP_signal)
+                self.signal_status_bar.emit("Making Breakpoint Disable")
+                self.Com_Send_Data("BD " + BP_signal + '\r')
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                if "ERROR" in s:
+                    QMessageBox.warning(self, "Warning", s)
+                    return s
+                print(s)
+                return None
+    def Read_Breakpoint(self, BP_startread_signal=None):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return "ERROR"
+        else:
+            if BP_startread_signal == '':
+                #QMessageBox.critical(self, 'Warning', '', )
+                return None
+            else:
+                if self.com.is_open == False:
+                    QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+                else:
+                    self.signal_status_bar.emit("Reading Breakpoint")
+                    self.Com_Send_Data('BL\r')
+                    text_receive_Breakpoint=self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                    self.text_receive_Breakpoint.emit(text_receive_Breakpoint)
+#####General function###################################################################################################
     # 串口发送数据
     def Com_Send_Data(self, message=None):
         txData = self.textEdit_Send.toPlainText()
@@ -263,10 +386,11 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             return
         elif len(txData) == 0 and message != None:
             #message=message+"\r"
+            self.signal_status_bar.emit("Sending Data")
             self.com.write(message.encode('UTF-8'))
             return
         elif self.checkBox_HexSend.isChecked() == False:
-
+            self.signal_status_bar.emit("Sending Data")
             self.com.write(txData.encode('UTF-8'))
             self.com.write('\r'.encode('UTF-8'))
         else:
@@ -291,29 +415,31 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
 
     # 串口接收数据
     def Com_Receive_Data(self):
-        if self.com.is_open == True:
-            try:
-                rxData = bytes(self.com.read_all())
-            except:
-                QMessageBox.critical(self, 'Fatal error', 'The serial port received wrond data. Please check the serial port connect.')
-                self.Com_Close_Button_clicked()
-            if self.checkBox_HexShow.isChecked() == False:
-                try:
-                    self.textEdit_Receive.insertPlainText(rxData.decode('UTF-8'))
-                except:
-                    pass
-            elif self.checkBox_HexShow.isChecked() == True and rxData !=b'' :
-                Data = binascii.b2a_hex(rxData).decode('ascii')
-                # re 正则表达式 (.{2}) 匹配两个字母
-                hexStr = ' 0x'.join(re.findall('(.{2})', Data))
-                # 补齐第一个 0x
-                hexStr = '0x' + hexStr
-                self.textEdit_Receive.insertPlainText(hexStr)
-                self.textEdit_Receive.insertPlainText(' ')
-            elif rxData == b'':
-                return None
-        else:
-            return None
+        def display_data(self, rxData):
+            self.textEdit_Receive.insertPlainText(rxData)
+        # if self.com.is_open == True:
+        #     try:
+        #         rxData = bytes(self.com.read_all())
+        #     except:
+        #         QMessageBox.critical(self, 'Fatal error', 'The serial port received wrond data. Please check the serial port connect.')
+        #         self.Com_Close_Button_clicked()
+        #     if self.checkBox_HexShow.isChecked() == False:
+        #         try:
+        #             self.textEdit_Receive.insertPlainText(rxData.decode('UTF-8'))
+        #         except:
+        #             pass
+        #     elif self.checkBox_HexShow.isChecked() == True and rxData !=b'' :
+        #         Data = binascii.b2a_hex(rxData).decode('ascii')
+        #         # re 正则表达式 (.{2}) 匹配两个字母
+        #         hexStr = ' 0x'.join(re.findall('(.{2})', Data))
+        #         # 补齐第一个 0x
+        #         hexStr = '0x' + hexStr
+        #         self.textEdit_Receive.insertPlainText(hexStr)
+        #         self.textEdit_Receive.insertPlainText(' ')
+        #     elif rxData == b'':
+        #         return None
+        # else:
+        #     return None
 
     # 串口刷新
     def Com_Refresh_Button_Clicked(self):
@@ -362,6 +488,18 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         except:
             QMessageBox.critical(self, 'Fatal error', 'The serial port failed to be opened')
             return
+        print("> Connecting to MPT2-Labbord...")
+        self.signal_status_bar.emit("> Connecting to MPT2-Labbord...")
+        # i=0
+        # while i < 10:
+        #     i += 1
+        #     self.com.write("\x03".encode("utf-8"))
+        #     s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+        #   self.textEdit_Receive.insertPlainText(s)
+        #     if len(s) > 0 and s[-1] == "#":
+        #         print("Connection Successful")
+        #         self.signal_status_bar.emit("> Connection Successful")
+        #         break
         self.pushButton_ClosePort.setEnabled(True)
         self.pushButton_OpenPort.setEnabled(False)
         self.pushButton_Refresh.setEnabled(False)
@@ -377,6 +515,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             # 关闭串口
             self.com.close()
             print("Serial port closed")
+            self.signal_status_bar.emit("Serial port closed")
             # 恢复串口读取
             #self.com.blockSignals(False)
         else:
@@ -407,10 +546,12 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
 class UploadThread(QThread):
     progress = pyqtSignal(int)
     finished = pyqtSignal(int)
-    def __init__(self, com, file_path):
+    display  = pyqtSignal(str)
+    def __init__(self, com, file_path, signal_status_bar):
         super().__init__()
         self.com = com
         self.file_path = file_path
+        self.signal_status_bar = signal_status_bar
 
     def run(self):
         try:
@@ -418,13 +559,15 @@ class UploadThread(QThread):
                 lines = file.readlines()
                 total_lines = len(lines)
                 for i, line in enumerate(lines):
-                    self.com.write(line.encode("utf-8"))
-                    #s = self.com.read_until(expected="#".encode("utf-8")).decode("utf--8")
-                    #print(s)
+                    self.com.write((line+"\r").encode("utf-8"))
+                    s = self.com.read_until(expected="#".encode("utf-8")).decode("utf--8")
+                    self.display.emit(s)
+                    self.signal_status_bar.emit("Uploading hex file")
+                    print(s)
                     #time.sleep(0.01)  # Simulate a delay in sending data
                     progress_percent = int((i + 1) / total_lines * 100)
                     print(progress_percent)
-                    print(line)
+                    #print(line)
                     self.progress.emit(progress_percent)
                     if progress_percent == 100:
                         self.finished.emit(1)
@@ -432,7 +575,47 @@ class UploadThread(QThread):
             print(f"Error: {e}")
             self.progress.emit(-1)  # Emit a special value to indicate an error
 
-
+class Com_Receive_Thread(QThread):
+    data_received = pyqtSignal(int)
+    def __init__(self, com, textEdit_Receive, Com_Close_Button_clicked, checkBox_HexShow, signal_status_bar):
+        super().__init__()
+        self.com = com
+        self.textEdit_Receive= textEdit_Receive
+        self.Com_Close_Button_clicked =Com_Close_Button_clicked
+        self.checkBox_HexShow =checkBox_HexShow
+        self.signal_status_bar = signal_status_bar
+    def receive_zone_update(self, message):
+        self.textEdit_Receive.insertPlainText(message)
+        #self.signal_status_bar.emit(message)
+    def run(self):
+        if self.com.is_open == True:
+            try:
+                rxData = bytes(self.com.read_all())
+                if rxData != b'':
+                    #self.signal_status_bar.emit("Receiving Data")
+                    return
+            except:
+                QMessageBox.critical(self, 'Fatal error', 'The serial port received wrond data. Please check the serial port connect.')
+                self.Com_Close_Button_clicked()
+                self.signal_status_bar.emit("Serial port closed")
+            if self.checkBox_HexShow.isChecked() == False:
+                try:
+                    self.textEdit_Receive.insertPlainText(rxData.decode('UTF-8'))
+                except:
+                    pass
+            elif self.checkBox_HexShow.isChecked() == True and rxData !=b'' :
+                Data = binascii.b2a_hex(rxData).decode('ascii')
+                # re 正则表达式 (.{2}) 匹配两个字母
+                hexStr = ' 0x'.join(re.findall('(.{2})', Data))
+                # 补齐第一个 0x
+                hexStr = '0x' + hexStr
+                self.textEdit_Receive.insertPlainText(hexStr)
+                self.textEdit_Receive.insertPlainText(' ')
+            elif rxData == b'':
+                return None
+        else:
+            return None
+    
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)

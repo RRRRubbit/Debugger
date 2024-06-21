@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>652</height>
+    <height>645</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -235,7 +235,6 @@ P5 = 00000000
     <addaction name="actionRun"/>
     <addaction name="actionStep_Run"/>
     <addaction name="actionStep_Function_Run"/>
-    <addaction name="actionUpdateregister"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -243,7 +242,7 @@ P5 = 00000000
     </property>
     <addaction name="actionUpdate_RAM"/>
     <addaction name="actionUpdate_Port"/>
-    <addaction name="actionUpdate_ASM"/>
+    <addaction name="actionUpdate_Register"/>
    </widget>
    <widget class="QMenu" name="menuBreak">
     <property name="title">
@@ -256,7 +255,6 @@ P5 = 00000000
     <property name="title">
      <string>Option</string>
     </property>
-    <addaction name="actionList_Port"/>
     <addaction name="actionOpen_Port"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -354,6 +352,14 @@ P5 = 00000000
   <action name="actionClean_All_Break_Point">
    <property name="text">
     <string>Clean All Break Point</string>
+   </property>
+  </action>
+  <action name="actionUpdate_Register">
+   <property name="text">
+    <string>Update Register</string>
+   </property>
+   <property name="iconText">
+    <string>Update Register</string>
    </property>
   </action>
  </widget>
