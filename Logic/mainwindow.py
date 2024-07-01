@@ -86,8 +86,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #bk = BreakPointDialog()
         self.BreakPoint.show()
         self.statusBar_show('Breakpoint window is open')
-    def statusBar_show(self,message):
-        self.statusbar.showMessage(message,5000)
+    def statusBar_show(self,message, show_time=None):
+        if show_time is None:
+            self.statusbar.showMessage(message,1000)
+        else:
+            show_time = int(show_time)
+            self.statusbar.showMessage(message, show_time)
 ######Breakpoint functions##############################################################################################
     def SetListwidget(self):
         self.listWidget_ASM.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -136,7 +140,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # 调用设置断点的方法，并传递 BP_signal 作为参数
             s=self.PortSelect.Set_Breakpoint(BP_signal)
             if s == None:
-                self.breakpoints += [BP_signal]
+                if BP_signal not in self.breakpoints:
+                    if "Deleted" in self.breakpoints :
+                        deleted_index=(self.breakpoints.index("Deleted"))
+                        self.breakpoints[deleted_index] = BP_signal
+                    else:
+                        self.breakpoints += [BP_signal]
                 if ' [Breakpoint]' not in item_text:
                     item.setText(f"{item_text} [Breakpoint] [Enable]")
                 else:
@@ -152,6 +161,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, "Warning", "Please open the Serial Port.")
         elif BP_Addtrss in self.breakpoints:
             BP_signal=self.breakpoints.index(BP_Addtrss)
+            self.breakpoints[BP_signal]="Deleted"
+            print(self.breakpoints[BP_signal])
             s = self.PortSelect.Remove_Breakpoint(BP_signal)
             print(f'Removed breakpoint at: {item_text}')
             if s == None:
@@ -185,9 +196,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     QMessageBox.warning(self, "Warning", "The is already Breakpoint enabled.")
                 elif ' [Breakpoint] [Disable]' in item_text:
                     item.setText(item_text.replace(' [Disable]', ' [Enable]'))
-                    address_part = item_text[0:4]
-                    BP_signal = address_part
-                    self.PortSelect.Enable_Breakpoint(BP_signal)
                     print(f'Removed breakpoint at: {item_text}')
                 else:
                     item.setText(f"{item_text} [Enable]")
@@ -226,7 +234,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def get_RAM(self):
         if self.PortSelect.com.is_open == True:
             print("> Starting get RAM... ")
-            self.statusBar_show("Getting RAM")
+            self.statusBar_show("Getting RAM",1000)
             Scroll_Value = self.verticalScrollBar_RAM.value()
             #print(Scroll_Value)
             s = self.PortSelect.get_RAM(Scroll_Value)
@@ -244,7 +252,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, "Warning", "Please open the serial port")
             return
     def get_IO(self):
-        self.statusBar_show("Getting IO")
+        self.statusBar_show("Getting IO",100)
+        print("> Starting get IO... ")
         if self.PortSelect.com.is_open == True:
             s = self.PortSelect.get_IO()
             if s == "":
@@ -261,7 +270,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self,"Warning","Could not get all ports. Please check the connection.")
 
     def get_register(self):
-        self.statusBar_show("Getting register")
+        self.statusBar_show("Getting register",1000)
+        print("> Starting get register... ")
         if self.PortSelect.com.is_open == True:
             s = self.PortSelect.get_register()
             if s == "":
@@ -292,8 +302,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 lst_content = f.read()
             #pattern = re.compile(r'^(\s*[\w\$]+:)?\s*([^\r\n;]*)', re.MULTILINE)
 
-            address_pattern = re.compile(r'\s+\d+/(.+?);', re.MULTILINE)
-
+            lst_content = lst_content.split('Symbol Table')[0]
+            address_pattern = re.compile(r'^.+\s:\s.+$', re.MULTILINE)
+            #\s+\w+\s+:+\s(.+?): 匹配注释行
+            #\s+\w+\s+:+\s(.+?):*\r?\n|(?<!\n)\r 匹配全部字符
+            #\s + [0 - 9a - fA - F] +\s +: +(.+?); 匹配非注释行
+            #(\s+\w+\s+:+(.+?);(.+?)\r?\n|(?<!\n)\r)|(\s+\w+\s+:+(.+?):(.+?)\r?\n|(?<!\n)\r
+            #^(\(\d\))?\s+\d+(\/)\s+[0-9a-fA-F]+\s:?;?(.+?)+$匹配大部分行
+            #[0-9a-fA-F]+\s:(.+?):?;?(.+?)+匹配所有行
             # 提取地址和内容
             addresses = address_pattern.findall(lst_content)
             # 输出匹配结果
@@ -302,8 +318,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             # 遍历每一行
             for line in lines:
-                parts = line.split(':')
-                address = parts[0].strip()  # 获取地址部分
+                parts = line.split(':',1)
+                address = parts[0].strip()
+                address = address[-4:]# 获取地址部分
+                address = address.replace(' ', '')
                 content = parts[1].strip() if len(parts) > 1 else ''  # 获取内容部分（如果有）
                 address_lines[address] = content  # 更新字典
 
@@ -434,7 +452,7 @@ C:66F0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
                 Background = QBrush(QColor(255, 255, 255, 255))  # 黄色，带有一些透明度
                 item.setBackground(Background)
         ProgramCounter=PC
-        text_to_find=ProgramCounter
+        text_to_find=ProgramCounter+" : "
         for index in range(self.listWidget_ASM.count()):
                 item = self.listWidget_ASM.item(index)
                 if text_to_find in item.text():

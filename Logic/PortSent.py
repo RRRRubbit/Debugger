@@ -84,7 +84,6 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             return
         else:
             #设置进度条
-            self.signal_status_bar.emit("Uploading Hex File...Please choose a hex file")
             self.progress_dialog = QProgressDialog('Uploading Hex File...', 'Cancel', 0, 100, self)
             self.progress_dialog.setAutoClose(True)
             self.progress_dialog.setAutoReset(True)
@@ -98,13 +97,12 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             if not self.file_path:
                 QMessageBox.warning(self, "Warning", "No file selected")
                 return
-            else:
-                #创建线程实例
-                self.upload_thread=UploadThread(self.com, self.file_path, self.signal_status_bar)
-                self.upload_thread.progress.connect(self.update_progress)
-                self.upload_thread.display.connect(self.receive_thread.receive_zone_update)
-                self.upload_thread.finished.connect(self.upload_finished)
-                self.upload_thread.start()
+            #创建线程实例
+            self.upload_thread=UploadThread(self.com, self.file_path, self.signal_status_bar)
+            self.upload_thread.progress.connect(self.update_progress)
+            self.upload_thread.display.connect(self.receive_thread.receive_zone_update)
+            self.upload_thread.finished.connect(self.upload_finished)
+            self.upload_thread.start()
     def update_progress(self, value):
         if value == -1:
             QMessageBox.critical(self, "Error", "An error occurred during upload")
@@ -114,9 +112,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
 
     def upload_finished(self):
         self.progress_dialog.setValue(100)
-        self.signal_status_bar.emit("Successful: File '{}' is open".format(self.file_path) )
         QMessageBox.information(self, "Success", "Upload finished successfully")
-
 
     def cancel_upload(self):
         if self.upload_thread != None:
@@ -128,19 +124,19 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         QMessageBox.warning(self, "Canceled", "Upload canceled")
 ######Run code function###################################################################################################
     def run_code(self):
+        self.signal_status_bar.emit("Start program excuting")
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return False
         else:
-            self.signal_status_bar.emit("Start program excuting")
-            self.com.write("G 8000\r".encode("utf-8"))
-            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-            self.textEdit_Receive.insertPlainText(s)
-            if len(s) == 0 or s[-1] != "#":
-                raise Exception("Could not start program. Please reset and try again.")
+            # self.com.write("G 8000\r".encode("utf-8"))
+            # s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            # self.textEdit_Receive.insertPlainText(s)
+            # if len(s) == 0 or s[-1] != "#":
+            #     raise Exception("Could not start program. Please reset and try again.")
             self.com.write("BL\r".encode("utf-8"))
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-            self.textEdit_Receive.insertPlainText(s)
+            # self.textEdit_Receive.insertPlainText(s)
             if s == '\r\n#':
                 self.com.write("G\r".encode("utf-8"))
                 QMessageBox.warning(self, "Warning", "Code is running with out BreakPoint")
@@ -154,11 +150,11 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.signal_get_RAM.emit('Run code then get RAM')
             return
     def run_step_code(self):
+        self.signal_status_bar.emit("Start program step excuting")
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return False
         else:
-            self.signal_status_bar.emit("Start program excuting")
             self.com.write("T\r".encode("utf-8"))
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
             self.textEdit_Receive.insertPlainText(s)
@@ -169,11 +165,11 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             self.signal_get_RAM.emit('Run code then get RAM')
             return
     def run_step_function_code(self):
+        self.signal_status_bar.emit("Start program step by function excuting")
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return False
         else:
-            self.signal_status_bar.emit("Start program excuting")
             self.com.write("P\r".encode("utf-8"))
             s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
             self.textEdit_Receive.insertPlainText(s)
@@ -280,7 +276,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 return None
             else:
                 BP_signal = str(BP_signal)
-                self.signal_status_bar.emit("Setting Breakpoint")
+                self.signal_status_bar.emit("Setting Breakpoint {}" .format(BP_signal))
                 self.Com_Send_Data("BS "+BP_signal+"\r")
                 print("set breakpoint at:"+"BS "+BP_signal+"\r")
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
@@ -490,16 +486,16 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             return
         print("> Connecting to MPT2-Labbord...")
         self.signal_status_bar.emit("> Connecting to MPT2-Labbord...")
-        # i=0
-        # while i < 10:
-        #     i += 1
-        #     self.com.write("\x03".encode("utf-8"))
-        #     s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
-        #   self.textEdit_Receive.insertPlainText(s)
-        #     if len(s) > 0 and s[-1] == "#":
-        #         print("Connection Successful")
-        #         self.signal_status_bar.emit("> Connection Successful")
-        #         break
+        i=0
+        while i < 10:
+            i += 1
+            self.com.write("\x03".encode("utf-8"))
+            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.textEdit_Receive.insertPlainText(s)
+            if len(s) > 0 and s[-1] == "#":
+                print("Connection Successful")
+                self.signal_status_bar.emit("> Connection Successful")
+                break
         self.pushButton_ClosePort.setEnabled(True)
         self.pushButton_OpenPort.setEnabled(False)
         self.pushButton_Refresh.setEnabled(False)
@@ -541,8 +537,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
         else:
             # Serial port is not open, close the window
             self.close()  # Accept the close event
-
-#
+#####Class Upload Thread##############################################################################################
 class UploadThread(QThread):
     progress = pyqtSignal(int)
     finished = pyqtSignal(int)
@@ -551,7 +546,6 @@ class UploadThread(QThread):
         super().__init__()
         self.com = com
         self.file_path = file_path
-        self.signal_status_bar = signal_status_bar
 
     def run(self):
         try:
@@ -562,7 +556,6 @@ class UploadThread(QThread):
                     self.com.write((line+"\r").encode("utf-8"))
                     s = self.com.read_until(expected="#".encode("utf-8")).decode("utf--8")
                     self.display.emit(s)
-                    self.signal_status_bar.emit("Uploading hex file")
                     print(s)
                     #time.sleep(0.01)  # Simulate a delay in sending data
                     progress_percent = int((i + 1) / total_lines * 100)
@@ -574,7 +567,7 @@ class UploadThread(QThread):
         except Exception as e:
             print(f"Error: {e}")
             self.progress.emit(-1)  # Emit a special value to indicate an error
-
+#####Class Receive Thread##############################################################################################
 class Com_Receive_Thread(QThread):
     data_received = pyqtSignal(int)
     def __init__(self, com, textEdit_Receive, Com_Close_Button_clicked, checkBox_HexShow, signal_status_bar):
@@ -586,21 +579,19 @@ class Com_Receive_Thread(QThread):
         self.signal_status_bar = signal_status_bar
     def receive_zone_update(self, message):
         self.textEdit_Receive.insertPlainText(message)
-        #self.signal_status_bar.emit(message)
+        self.signal_status_bar.emit(message)
     def run(self):
         if self.com.is_open == True:
             try:
                 rxData = bytes(self.com.read_all())
-                if rxData != b'':
-                    #self.signal_status_bar.emit("Receiving Data")
-                    return
             except:
                 QMessageBox.critical(self, 'Fatal error', 'The serial port received wrond data. Please check the serial port connect.')
                 self.Com_Close_Button_clicked()
-                self.signal_status_bar.emit("Serial port closed")
             if self.checkBox_HexShow.isChecked() == False:
                 try:
                     self.textEdit_Receive.insertPlainText(rxData.decode('UTF-8'))
+                    if rxData != b'':
+                        self.signal_status_bar.emit("Receiving Data")
                 except:
                     pass
             elif self.checkBox_HexShow.isChecked() == True and rxData !=b'' :

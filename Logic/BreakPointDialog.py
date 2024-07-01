@@ -74,15 +74,34 @@ class BreakPointDialog(QtWidgets.QDialog, Ui_Dialog):
             else:
                 lines = [line for line in lines if line and not line.startswith('#')]
                 current_text = [line.split(':')[1] for line in lines if ':' in line]
+                current_index =  [line.split(':')[0] for line in lines if ':' in line]
                 for i in range(len(current_text)):
                     current_Address = current_text[i]
                     if current_Address:
                         current_text[i] = current_Address[-4:]
-                for i, text_widget in enumerate([self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
-                                                 self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
-                                                 self.lineEdit_08, self.lineEdit_09], start=0):
-                    if i < len(current_text) and current_text[i]:  # 检查索引是否有效且值非空
-                        text_widget.setText(current_text[i])
+                #breakpoint_dict=dict(zip(current_index,current_text))
+                breakpoint_dict = {'current_index': current_index, 'current_text' : current_text}
+
+                self.lineEdits = [
+                    self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
+                    self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
+                    self.lineEdit_08, self.lineEdit_09
+                ]
+
+            def update_lineEdits(lineEdits, breakpoint_dict):
+                for i, index in enumerate(breakpoint_dict['current_index']):
+                    # Convert index to integer and subtract 1 to match zero-based indexing of list
+                    edit_index = int(index)
+                    if 0 <= edit_index < len(lineEdits):
+                        lineEdits[edit_index].setText(breakpoint_dict['current_text'][i])
+            update_lineEdits(self.lineEdits, breakpoint_dict)
+                # for i, text_widget in enumerate([self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
+                #                                  self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
+                #                                  self.lineEdit_08, self.lineEdit_09], start=0):
+                #     for j in enumerate(breakpoint_dict)
+                #     if i < len(current_text) and current_text[i]:  # 检查索引是否有效且值非空
+                #         if i == breakpoint_dict[current_index[i]]
+                #         text_widget.setText(current_text[i])
                         # 否则不执行赋值操作，text_widget将保持其当前值或默认值
 
             # self.lineEdit_00.text = current_text[0]
