@@ -50,86 +50,7 @@
       <property name="sizeConstraint">
        <enum>QLayout::SetNoConstraint</enum>
       </property>
-      <item row="2" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
-        <item>
-         <widget class="QListWidget" name="listWidget_ASM">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>300</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Courier New</family>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_Port">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>300</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Courier New</family>
-            <pointsize>10</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-            <kerning>true</kerning>
-           </font>
-          </property>
-          <property name="text">
-           <string>P0 = 00000000
-
-P1 = 00000000
-
-P2 = 00000000
-
-P3 = 00000000
-
-P4 = 00000000
-
-P5 = 00000000
-
-</string>
-          </property>
-          <property name="scaledContents">
-           <bool>false</bool>
-          </property>
-          <property name="wordWrap">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_RAM" stretch="0,0">
         <item>
          <widget class="QLabel" name="label_RAM">
@@ -263,6 +184,100 @@ P5 = 00000000
         </property>
        </widget>
       </item>
+      <item row="2" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+        <item>
+         <widget class="QListWidget" name="listWidget_ASM">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>300</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Courier New</family>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_Port">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>300</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Courier New</family>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+            <kerning>true</kerning>
+           </font>
+          </property>
+          <property name="text">
+           <string>P0 = 00000000
+
+P1 = 00000000
+
+P2 = 00000000
+
+P3 = 00000000
+
+P4 = 00000000
+
+P5 = 00000000
+
+</string>
+          </property>
+          <property name="scaledContents">
+           <bool>false</bool>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_RAM_model">
+        <property name="font">
+         <font>
+          <family>Courier New</family>
+          <pointsize>14</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>RAM model: Program Memory</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -290,6 +305,7 @@ P5 = 00000000
     <addaction name="actionRun"/>
     <addaction name="actionStep_Run"/>
     <addaction name="actionStep_Function_Run"/>
+    <addaction name="actionReset"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -298,6 +314,14 @@ P5 = 00000000
     <addaction name="actionUpdate_RAM"/>
     <addaction name="actionUpdate_Port"/>
     <addaction name="actionUpdate_Register"/>
+    <addaction name="separator"/>
+    <addaction name="actionCode_Memory"/>
+    <addaction name="actionDirect_InRAM"/>
+    <addaction name="actionIndirect_InRAM"/>
+    <addaction name="actionExternal_RAM"/>
+    <addaction name="separator"/>
+    <addaction name="actionView_Address"/>
+    <addaction name="actionRefresh_Display"/>
    </widget>
    <widget class="QMenu" name="menuBreak">
     <property name="title">
@@ -378,8 +402,17 @@ P5 = 00000000
    <property name="text">
     <string>Updateregister</string>
    </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
   </action>
   <action name="actionUpdate_RAM">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Update RAM</string>
    </property>
@@ -417,7 +450,265 @@ P5 = 00000000
     <string>Update Register</string>
    </property>
   </action>
+  <action name="actionReset">
+   <property name="text">
+    <string>Program Reset</string>
+   </property>
+  </action>
+  <action name="actionIndirect_InRAM">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Indirect addr. internal RAM</string>
+   </property>
+  </action>
+  <action name="actionDirect_InRAM">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Direct addr. internal RAM</string>
+   </property>
+  </action>
+  <action name="actionExternal_RAM">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>External RAM</string>
+   </property>
+  </action>
+  <action name="actionCode_Memory">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Code Memory</string>
+   </property>
+  </action>
+  <action name="actionView_Address">
+   <property name="text">
+    <string>View address</string>
+   </property>
+  </action>
+  <action name="actionRefresh_Display">
+   <property name="text">
+    <string>Refresh Display</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionDirect_InRAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionExternal_RAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionDirect_InRAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionIndirect_InRAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionDirect_InRAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionCode_Memory</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCode_Memory</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionDirect_InRAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCode_Memory</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionExternal_RAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCode_Memory</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionIndirect_InRAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExternal_RAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionCode_Memory</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionIndirect_InRAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionDirect_InRAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExternal_RAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionIndirect_InRAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionIndirect_InRAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionExternal_RAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionIndirect_InRAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionCode_Memory</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExternal_RAM</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionDirect_InRAM</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

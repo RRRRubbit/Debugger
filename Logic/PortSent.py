@@ -206,6 +206,25 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.signal_status_bar.emit("Getting IO")
                 self.text_receive_IO.emit(s)
         return s
+
+    def reset_program(self):
+        if self.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please Open Serial Port")
+            return
+        else:
+            self.signal_status_bar.emit("Resetting program")
+            self.com.write('G 8000\r'.encode("utf-8"))
+            # self.com.write(0x0D)
+            s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+            self.textEdit_Receive.insertPlainText(s)
+            # print(s)
+            # print(self.text_receive_register)
+            # self.text_receive = s
+            if len(s) == 0 or s[-1] != "#":
+                raise Exception("Could not reset program. Please reset and try again.")
+            else:
+                self.signal_status_bar.emit(s)
+        return s
     def get_register(self):
             if self.com.is_open == False:
                 QMessageBox.warning(self, "Warning", "Please Open Serial Port")
@@ -224,14 +243,38 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 else:
                     self.text_receive_register.emit(s)
             return s
-    def get_RAM(self, Scroll_Value=None):
+    global RAM_model
+    RAM_model = 'DC'
+    def get_RAM(self, Scroll_Value=None, Model=None):
+        global RAM_model
+        if Model != None:
+            RAM_model= Model
         if self.com.is_open == False:
             QMessageBox.warning(self, "Warning", "Please Open Serial Port")
             return
         else:
-            if Scroll_Value == None :
+            if Scroll_Value == None:
                 self.signal_status_bar.emit("Getting RAM")
-                self.com.write("DC 0000 003f\r".encode("utf-8"))
+                if Model == None:
+                    match RAM_model:
+                        case 'DC':
+                            self.com.write("DC 0000 003f\r".encode("utf-8"))
+                        case 'DD':
+                            self.com.write("DD 0000 003f\r".encode("utf-8"))
+                        case 'DI':
+                            self.com.write("DI 0000 003f\r".encode("utf-8"))
+                        case 'DX':
+                            self.com.write("DX 0000 003f\r".encode("utf-8"))
+                elif Model !=None:
+                    match Model:
+                        case 'DC':
+                            self.com.write("DC 0000 003f\r".encode("utf-8"))
+                        case 'DD':
+                            self.com.write("DD 0000 003f\r".encode("utf-8"))
+                        case 'DI':
+                            self.com.write("DI 0000 003f\r".encode("utf-8"))
+                        case 'DX':
+                            self.com.write("DX 0000 003f\r".encode("utf-8"))
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
                 self.textEdit_Receive.insertPlainText(s)
                 #print(s)
@@ -248,7 +291,15 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 end_str = hex(end)[2:]
                 start_str=start_str.zfill(4)
                 end_str=end_str.zfill(4)
-                self.com.write(("DC"+" "+start_str+" "+end_str+"\r").encode("utf-8"))
+                match RAM_model:
+                    case 'DC':
+                        self.com.write(("DC" + " " + start_str + " " + end_str + "\r").encode("utf-8"))
+                    case 'DD':
+                        self.com.write(("DD" + " " + start_str + " " + end_str + "\r").encode("utf-8"))
+                    case 'DI':
+                        self.com.write(("DI" + " " + start_str + " " + end_str + "\r").encode("utf-8"))
+                    case 'DX':
+                        self.com.write(("DX" + " " + start_str + " " + end_str + "\r").encode("utf-8"))
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
                 self.textEdit_Receive.insertPlainText(s)
                 #print(s)
@@ -373,7 +424,9 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                     self.signal_status_bar.emit("Reading Breakpoint")
                     self.Com_Send_Data('BL\r')
                     text_receive_Breakpoint=self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                    self.signal_status_bar.emit(text_receive_Breakpoint)
                     self.text_receive_Breakpoint.emit(text_receive_Breakpoint)
+                    self.textEdit_Receive.insertPlainText(text_receive_Breakpoint)
 #####General function###################################################################################################
     # 串口发送数据
     def Com_Send_Data(self, message=None):
@@ -495,6 +548,12 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
             if len(s) > 0 and s[-1] == "#":
                 print("Connection Successful")
                 self.signal_status_bar.emit("> Connection Successful")
+                self.com.write('G 8000\r'.encode("utf-8"))
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
+                self.com.write('BK ALL\r'.encode("utf-8"))
+                s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
+                self.textEdit_Receive.insertPlainText(s)
                 break
         self.pushButton_ClosePort.setEnabled(True)
         self.pushButton_OpenPort.setEnabled(False)
@@ -585,7 +644,8 @@ class Com_Receive_Thread(QThread):
             try:
                 rxData = bytes(self.com.read_all())
             except:
-                QMessageBox.critical(self, 'Fatal error', 'The serial port received wrond data. Please check the serial port connect.')
+                #QMessageBox.critical(self, 'Fatal error', 'The serial port received wrond data. Please check the serial port connect.')
+                #QMessageBox.warning(self, 'Fatal error', 'The serial port received wrond data. Please check the serial port connect.')
                 self.Com_Close_Button_clicked()
             if self.checkBox_HexShow.isChecked() == False:
                 try:

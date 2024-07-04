@@ -58,16 +58,23 @@ class BreakPointDialog(QtWidgets.QDialog, Ui_Dialog):
             return None
         elif current_text == 'BL\r\n#':#if no Breakpoint set
             # Assuming self.lineEdit_00 to self.lineEdit_09 are defined somewhere in your class
-            line_edits = [
+            self.lineEdits = [
                 self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
                 self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
                 self.lineEdit_08, self.lineEdit_09
             ]
 
-            for line_edit in line_edits:
+            for line_edit in self.lineEdits:
                 line_edit.clear()
 
         else:
+            self.lineEdits = [
+                self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
+                self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
+                self.lineEdit_08, self.lineEdit_09
+            ]
+            for line_edit in self.lineEdits:
+                line_edit.clear()
             lines = current_text.strip().split('\r\n')
             if 'ERROR' in lines[1]:#判断是否有ERROR
                 QMessageBox.critical(self,'Error Address set','Error')
@@ -82,13 +89,14 @@ class BreakPointDialog(QtWidgets.QDialog, Ui_Dialog):
                 #breakpoint_dict=dict(zip(current_index,current_text))
                 breakpoint_dict = {'current_index': current_index, 'current_text' : current_text}
 
-                self.lineEdits = [
-                    self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
-                    self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
-                    self.lineEdit_08, self.lineEdit_09
-                ]
+            self.lineEdits = [
+                self.lineEdit_00, self.lineEdit_01, self.lineEdit_02, self.lineEdit_03,
+                self.lineEdit_04, self.lineEdit_05, self.lineEdit_06, self.lineEdit_07,
+                self.lineEdit_08, self.lineEdit_09
+            ]
 
             def update_lineEdits(lineEdits, breakpoint_dict):
+                #self.lineEdits.clear()
                 for i, index in enumerate(breakpoint_dict['current_index']):
                     # Convert index to integer and subtract 1 to match zero-based indexing of list
                     edit_index = int(index)

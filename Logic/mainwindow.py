@@ -21,6 +21,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     trigger_PortSent = pyqtSignal()
     ScrollBar_RAM = pyqtSignal(int)
     ProgramCounter = pyqtSignal((str))
+    signal_RAM_model = pyqtSignal(str)
     global hexfile_dir
 
 ######initialization function##############################################################################################
@@ -36,9 +37,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionUpdate_Register.triggered.connect(self.get_register)
         self.actionOpen.triggered.connect(self.PortSelect.send_from_hex_file)
         self.actionRun.triggered.connect(self.PortSelect.run_code)
+        self.actionReset.triggered.connect(self.reset_program)
         self.actionLoad.triggered.connect(self.get_lst)
         self.actionList_Port.triggered.connect(self.set_Hightlight)
         self.ProgramCounter.connect(self.set_Hightlight)
+        self.actionIndirect_InRAM.toggled.connect(self.get_RAM_model)
+        self.actionDirect_InRAM.toggled.connect(self.get_RAM_model)
+        self.actionExternal_RAM.toggled.connect(self.get_RAM_model)
+        self.actionCode_Memory.toggled.connect(self.get_RAM_model)
+        self.signal_RAM_model.connect(lambda Model: self.PortSelect.get_RAM(Model=Model))
        # self.actionLoad.triggered.connect(self.upload)
         self.actionStep_Run.triggered.connect(self.PortSelect.run_step_code)
         self.actionStep_Function_Run.triggered.connect(self.PortSelect.run_step_function_code)
@@ -48,6 +55,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionMake_BreakPoint.triggered.connect(self.BreakPoint.read_BreakPoints)
         self.actionClean_All_Break_Point.triggered.connect(self.clean_all_break_point)
 
+        #self.actionClean_All_Break_Point.triggered.connect(self.clean_all_breakpoint_text)
         # Breakpoint model signal connect
         self.PortSelect.text_receive_register.connect(self.set_register)
         self.PortSelect.text_receive_RAM.connect(self.set_RAM)
@@ -129,6 +137,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # 显示菜单
         menu.exec_(self.listWidget_ASM.mapToGlobal(position))
 
+    def clean_all_breakpoint_text(self):
+        listWidget_ASM=self.listWidget_ASM
+        count = listWidget_ASM.count()
+        line_item=[]
+        for i in range(count):
+            line_item.append(listWidget_ASM.item(i).text())
+            if ' [Breakpoint] [Enable]' in line_item[i]:
+                new_line = str(line_item[i])
+
+                new_line=new_line.replace(' [Breakpoint] [Enable]', '')
+                listWidget_ASM.item(i).setText(new_line)
+
+            elif ' [Breakpoint] [Disable]' in line_item[i]:
+                new_line = str(line_item[i])
+                new_line=new_line.replace(' [Breakpoint] [Disable]', '')
+                listWidget_ASM.item(i).setText(new_line)
+            else:
+                continue
+
+
     def add_breakpoint(self, item):
         item_text = item.text()
         address_part = item_text[0:4]
@@ -139,6 +167,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             # 调用设置断点的方法，并传递 BP_signal 作为参数
             s=self.PortSelect.Set_Breakpoint(BP_signal)
+            self.statusBar_show(f'Set breakpoint at: {item_text}')
             if s == None:
                 if BP_signal not in self.breakpoints:
                     if "Deleted" in self.breakpoints :
@@ -165,6 +194,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print(self.breakpoints[BP_signal])
             s = self.PortSelect.Remove_Breakpoint(BP_signal)
             print(f'Removed breakpoint at: {item_text}')
+            self.statusBar_show(f'Removed breakpoint at: {item_text}')
             if s == None:
                 if ' [Breakpoint] [Enable]' in item_text:
                     item.setText(item_text.replace(' [Breakpoint] [Enable]', ''))
@@ -189,6 +219,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             BP_signal=self.breakpoints.index(BP_Addtrss)
             s = self.PortSelect.Enable_Breakpoint(BP_signal)
             print(f'Enable breakpoint at: {item_text}')
+            self.statusBar_show(f'Enable breakpoint at: {item_text}')
             if s == None:
                 if ' [Breakpoint]' not in item_text:
                     QMessageBox.warning(self, "Warning", "There is no Breakpoint.")
@@ -216,6 +247,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             BP_signal=self.breakpoints.index(BP_Addtrss)
             s = self.PortSelect.Disable_Breakpoint(BP_signal)
             print(f'Disable breakpoint at: {item_text}')
+            self.statusBar_show(f'Disable breakpoint at: {item_text}')
             if s == None:
                 if ' [Breakpoint]' not in item_text:
                     QMessageBox.warning(self, "Warning", "There is no Breakpoint.")
@@ -231,6 +263,32 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def get_ScrollBar(self):
         s = self.verticalScrollBar_RAM.sliderPosition() #获取进度条信息
         self.ScrollBar_RAM.emit(s)
+    def get_RAM_model(self):
+        sender = self.sender()
+        if sender == self.actionCode_Memory:
+            print("Code Memory selected")
+            self.label_RAM_model.setText('RAM model: Display program memory area')
+            self.signal_RAM_model.emit('DC')
+            self.verticalScrollBar_RAM.setMaximum(1023)#0000-ffff
+            return 'DC'
+        elif sender == self.actionDirect_InRAM:
+            print("Direct InRAM selected")
+            self.label_RAM_model.setText('RAM model: Display internal data memory area')
+            self.signal_RAM_model.emit('DD')
+            self.verticalScrollBar_RAM.setMaximum(3)#0000-00ff
+            return 'DD'
+        elif sender == self.actionIndirect_InRAM:
+            print("Indirect InRAM selected")
+            self.label_RAM_model.setText('RAM model: Display indirect data memory area ')
+            self.signal_RAM_model.emit('DI')
+            self.verticalScrollBar_RAM.setMaximum(3)#0000-00ff
+            return 'DI'
+        elif sender == self.actionExternal_RAM:
+            print("External RAM selected")
+            self.label_RAM_model.setText('RAM model: Display external data memory area ')
+            self.signal_RAM_model.emit('DX')
+            self.verticalScrollBar_RAM.setMaximum(63)#0000-0fff
+            return 'DX'
     def get_RAM(self):
         if self.PortSelect.com.is_open == True:
             print("> Starting get RAM... ")
@@ -287,7 +345,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     return
         else:
             QMessageBox.warning(self,"Warning","Could not get all registers. Please check the connection.")
-
+    def reset_program(self):
+        self.statusBar_show("resetting program", 1000)
+        print("> Starting reset program... ")
+        if self.PortSelect.com.is_open == True:
+            s = self.PortSelect.reset_program()
+            if s == "":
+                QMessageBox.warning(self, "Warning", "Could not get all register. Please check the connection.")
+                return
+            elif s != "":
+                # s = "Reset Microcontroller\r\n"
+                if s == None or len(s) == 0 or s[-1] != "#":
+                    QMessageBox.warning(self, "Warning", "Could not get all register. Please check the connection.")
+                else:
+                    self.get_ProgramCounter(s)
+                    # self.set_register(self.s)
+                    return
+        else:
+            QMessageBox.warning(self, "Warning", "Could not reset program. Please check the connection.")
+    global content_exist
     def get_lst(self):
         #Clean ASM Code Zone
         self.listWidget_ASM.clear()
@@ -298,7 +374,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if lstfile_dir == '':
             return
         else:
-            with open(lstfile_dir, 'r') as f:
+            with open(lstfile_dir, 'r', encoding='cp1252') as f:
                 lst_content = f.read()
             #pattern = re.compile(r'^(\s*[\w\$]+:)?\s*([^\r\n;]*)', re.MULTILINE)
 
@@ -314,21 +390,49 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             addresses = address_pattern.findall(lst_content)
             # 输出匹配结果
             lines = addresses
-            address_lines = {}
-
+            addresses_unuseful_pattern = re.compile(r'\(\d{1,3}\).+', re.IGNORECASE)
+            addresses_unuseful = addresses_unuseful_pattern.findall(lst_content)
+            address_content_list = []
+            #lines = list(set(lines)-set(addresses_unuseful))
             # 遍历每一行
             for line in lines:
                 parts = line.split(':',1)
-                address = parts[0].strip()
-                address = address[-4:]# 获取地址部分
-                address = address.replace(' ', '')
-                content = parts[1].strip() if len(parts) > 1 else ''  # 获取内容部分（如果有）
-                address_lines[address] = content  # 更新字典
+                address = parts[0]
+                match = re.search(addresses_unuseful_pattern, address)
+                if match:
+                    continue
+                else:
+                    address = parts[0].strip()
+                    address_include_file = parts[0].strip()
+                    address = address[-4:]# 获取地址部分
+                    address = address.replace(' ', '')
+                    #content = parts[1].strip() if len(parts) > 1 else ''  # 获取内容部分（如果有）
+                    content = parts[1]
+                    #address_lines[address] = content  # 更新字典
 
-            # 输出结果
-            for address, content in address_lines.items():
-                address=address.zfill(4) #补全4位十六进制
-                memory=address+' : '+content
+                    address_content_list.append((address,content))#更新列表
+
+                # 输出结果
+                # for address, content in address_lines.items():
+                #     address=address.zfill(4) #补全4位十六进制
+                #     memory=address+' : '+content
+                #     self.listWidget_ASM.addItem(memory)
+                #address_content_list.sort()
+            for address, content in address_content_list:
+                address = address.zfill(4)  # 补全4位十六进
+                print(len(content.strip()))
+                if content.isspace():
+                    print("All Space")
+
+                if  len(content) < 3:
+                        return False
+                elif (content[1].isdigit() or ('A' <= content[1] <='F')) and (content[2].isdigit() or ('A' <= content[2] <='F')):
+                    memory = address + ' :' + content
+                elif len(content.strip())==0 and content.isspace():
+                    continue
+                else:
+                    address_unreal = '    '
+                    memory = address_unreal + ' :' + content
                 self.listWidget_ASM.addItem(memory)
 
             if lstfile_dir == None:
@@ -462,12 +566,16 @@ C:66F0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
     def clean_all_break_point(self):
         if self.PortSelect.com.is_open == True:
-            self.statusBar_show("Cleaning All Breakpoint")
+            #self.statusBar_show("Cleaning All Breakpoint")
             print("> Cleaning All Breakpoint... ")
             self.PortSelect.Com_Send_Data(message="BK ALL\r")
             s = self.PortSelect.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
             self.PortSelect.textEdit_Receive.insertPlainText(s)
+            self.statusBar_show(s)
+            self.breakpoints.clear()
+            self.clean_all_breakpoint_text()
             print(s)
+
         else:
             QMessageBox.warning(self, "Warning", "Please open the serial port")
             return
