@@ -114,7 +114,7 @@ class Ui_Dialog_PortSelect(object):
 
     def retranslateUi(self, Dialog_PortSelect):
         _translate = QtCore.QCoreApplication.translate
-        Dialog_PortSelect.setWindowTitle(_translate("Dialog_PortSelect", "Dialog"))
+        Dialog_PortSelect.setWindowTitle(_translate("Dialog_PortSelect", "Serial Port Management"))
         self.label_ReceiveZone.setText(_translate("Dialog_PortSelect", "Receive Zone"))
         self.pushButton_Send.setText(_translate("Dialog_PortSelect", "Send"))
         self.pushButto_Clear.setText(_translate("Dialog_PortSelect", "Clear"))

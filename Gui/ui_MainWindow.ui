@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>646</height>
+    <height>642</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -62,7 +62,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>0</width>
+            <width>900</width>
             <height>80</height>
            </size>
           </property>
@@ -87,10 +87,10 @@
            <enum>Qt::LeftToRight</enum>
           </property>
           <property name="text">
-           <string>0000: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|
-0010: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|
-0020: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|
-0030: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|</string>
+           <string>C:0000: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|
+C:0010: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|
+C:0020: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|
+C:0030: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|</string>
           </property>
           <property name="scaledContents">
            <bool>false</bool>
@@ -207,6 +207,12 @@
             <bold>true</bold>
            </font>
           </property>
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAsNeeded</enum>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAsNeeded</enum>
+          </property>
          </widget>
         </item>
         <item>
@@ -274,7 +280,7 @@ P5 = 00000000
          </font>
         </property>
         <property name="text">
-         <string>RAM model: Program Memory</string>
+         <string>Memory model: Display program memory area</string>
         </property>
        </widget>
       </item>
@@ -288,7 +294,7 @@ P5 = 00000000
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -320,7 +326,6 @@ P5 = 00000000
     <addaction name="actionIndirect_InRAM"/>
     <addaction name="actionExternal_RAM"/>
     <addaction name="separator"/>
-    <addaction name="actionView_Address"/>
     <addaction name="actionRefresh_Display"/>
    </widget>
    <widget class="QMenu" name="menuBreak">
@@ -414,7 +419,7 @@ P5 = 00000000
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Update RAM</string>
+    <string>Update Memory</string>
    </property>
   </action>
   <action name="actionUpdate_Port">

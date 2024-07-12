@@ -27,6 +27,8 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
     signal_get_RAM=pyqtSignal(str)
     signal_get_IO=pyqtSignal(str)
     signal_status_bar = pyqtSignal(str)
+    signal_refresh = pyqtSignal(str)
+    BP_signal = pyqtSignal(str)
     def __init__(self, parent=None):
         super(PortSelectDialog, self).__init__(parent)
         self.setupUi(self)
@@ -323,6 +325,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.signal_status_bar.emit("Cleaning Breakpoint")
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
                 self.textEdit_Receive.insertPlainText(s)
+                self.BP_signal.emit('BPclean')
                 print(s)
                 return None
             else:
@@ -334,8 +337,12 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.textEdit_Receive.insertPlainText(s)
                 if "ERROR" in s:
                     QMessageBox.warning(self, "Warning", s)
-                    return s
-                print(s)
+                    #return "ERROR"
+                    self.BP_signal.emit("ERROR")
+                    return "ERROR"
+                else:
+                    print(s)
+                    self.BP_signal.emit(BP_signal)
                 return None
     def Remove_Breakpoint(self, BP_signal=None):
         if self.com.is_open == False:
@@ -361,7 +368,8 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.textEdit_Receive.insertPlainText(s)
                 if "ERROR" in s:
                     QMessageBox.warning(self, "Warning", s)
-                    return s
+                    self.BP_signal.emit("ERROR")
+                    return "ERROR"
                 print(s)
                 return None
     def Enable_Breakpoint(self, BP_signal=None):
@@ -388,7 +396,8 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.textEdit_Receive.insertPlainText(s)
                 if "ERROR" in s:
                     QMessageBox.warning(self, "Warning", s)
-                    return s
+                    self.BP_signal.emit("ERROR")
+                    return "ERROR"
                 print(s)
                 return None
     def Disable_Breakpoint(self, BP_signal=None):
@@ -406,7 +415,8 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.textEdit_Receive.insertPlainText(s)
                 if "ERROR" in s:
                     QMessageBox.warning(self, "Warning", s)
-                    return s
+                    self.BP_signal.emit("ERROR")
+                    return "ERROR"
                 print(s)
                 return None
     def Read_Breakpoint(self, BP_startread_signal=None):
@@ -554,6 +564,7 @@ class PortSelectDialog(QtWidgets.QDialog, Ui_Dialog_PortSelect):
                 self.com.write('BK ALL\r'.encode("utf-8"))
                 s = self.com.read_until(expected="#".encode("utf-8")).decode("utf-8")
                 self.textEdit_Receive.insertPlainText(s)
+                self.signal_refresh.emit(s)
                 break
         self.pushButton_ClosePort.setEnabled(True)
         self.pushButton_OpenPort.setEnabled(False)
@@ -605,6 +616,7 @@ class UploadThread(QThread):
         super().__init__()
         self.com = com
         self.file_path = file_path
+        self.signal_status_bar = signal_status_bar
 
     def run(self):
         try:

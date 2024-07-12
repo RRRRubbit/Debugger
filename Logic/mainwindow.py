@@ -32,6 +32,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.CreateSignalSlot()
         self.SetListwidget()
 
+
     def CreateSignalSlot(self):
         self.actionOpen_Port.triggered.connect(self.PortSent_show)
         self.actionUpdate_Register.triggered.connect(self.get_register)
@@ -45,6 +46,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionDirect_InRAM.toggled.connect(self.get_RAM_model)
         self.actionExternal_RAM.toggled.connect(self.get_RAM_model)
         self.actionCode_Memory.toggled.connect(self.get_RAM_model)
+        self.actionRefresh_Display.triggered.connect(self.Refresh_Display)
         self.signal_RAM_model.connect(lambda Model: self.PortSelect.get_RAM(Model=Model))
        # self.actionLoad.triggered.connect(self.upload)
         self.actionStep_Run.triggered.connect(self.PortSelect.run_step_code)
@@ -66,9 +68,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.PortSelect.signal_get_register.connect(self.get_register)
         self.PortSelect.signal_get_RAM.connect(self.get_RAM)
         self.PortSelect.signal_get_IO.connect(self.get_IO)
-
+        self.PortSelect.signal_refresh.connect(self.Refresh_Display)
+        self.PortSelect.BP_signal.connect(self.make_breakpoint_text)
         #Breakpoint model signal connect
         self.BreakPoint.BP_signal.connect(self.PortSelect.Set_Breakpoint)
+        #self.BreakPoint.BP_signal.connect(self.make_breakpoint_text)
         self.BreakPoint.BP_startread_signal.connect(self.PortSelect.Read_Breakpoint)
 
         #StatusBar model signal connect
@@ -156,6 +160,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 continue
 
+    def make_breakpoint_text(self,BP_signal):
+        #self.clean_all_breakpoint_text()
+        if BP_signal == 'BPclean':
+            self.breakpoints.clear()
+            self.clean_all_breakpoint_text()
+            print(f'Breakpoint list is {self.breakpoints}.')
+        elif BP_signal == '' or BP_signal == 'ERROR':
+            return
+        else:
+            items = self.listWidget_ASM.findItems(BP_signal+' : ', Qt.MatchFlag.MatchStartsWith)
+            if items == []:
+                return
+            else:
+                for item in items:
+                    item_text = item.text()
+                    if ' [Breakpoint] [Enable]' in item_text or ' [Breakpoint] [Disable]' in item_text:
+                        return "ERROR"
+
+                    else:
+                        item.setText(f"{item_text} [Breakpoint] [Enable]")
+                        if "Deleted" in self.breakpoints:
+                            deleted_index = (self.breakpoints.index("Deleted"))
+                            self.breakpoints[deleted_index] = BP_signal
+                        else:
+                            self.breakpoints += [BP_signal]
+                    print(f'Breakpoint list is {self.breakpoints}.')
+
+
+
 
     def add_breakpoint(self, item):
         item_text = item.text()
@@ -180,6 +213,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 else:
                     QMessageBox.warning(self, "Warning", "There is already a Breakpoint.")
                     return
+                print(f'Breakpoint list is {self.breakpoints}.')
+            elif s =="ERROR":
+                return
             else:
                 return
     def remove_breakpoint(self, item):
@@ -203,8 +239,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     item.setText(item_text.replace(' [Breakpoint] [Disable]', ''))
                 else:
                     QMessageBox.warning(self, "Warning", "There is no Breakpoint.")
+                print(f'Breakpoint list is {self.breakpoints}.')
             else:
                 return
+
         else:
             QMessageBox.warning(self, "Warning", "There is no Breakpoint.")
             return
@@ -230,6 +268,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     print(f'Removed breakpoint at: {item_text}')
                 else:
                     item.setText(f"{item_text} [Enable]")
+                print(f'Breakpoint list is {self.breakpoints}.')
             else:
                 return
         else:
@@ -255,11 +294,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     item.setText(item_text.replace('[Enable]', '[Disable]'))
             else:
                 return
+            print(f'Breakpoint list is {self.breakpoints}.')
         else:
             QMessageBox.warning(self, "Warning", "There is no Breakpoint.")
             return
 
 ######Data geting functions##############################################################################################
+
+    def Refresh_Display(self):
+        if self.PortSelect.com.is_open == False:
+            QMessageBox.warning(self, "Warning", "Please open the Serial Port.")
+        else:
+            self.get_RAM()
+            self.get_IO()
+            self.get_register()
     def get_ScrollBar(self):
         s = self.verticalScrollBar_RAM.sliderPosition() #获取进度条信息
         self.ScrollBar_RAM.emit(s)
@@ -267,27 +315,27 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         sender = self.sender()
         if sender == self.actionCode_Memory:
             print("Code Memory selected")
-            self.label_RAM_model.setText('RAM model: Display program memory area')
+            self.label_RAM_model.setText('Memory model: Display program memory area')
             self.signal_RAM_model.emit('DC')
             self.verticalScrollBar_RAM.setMaximum(1023)#0000-ffff
             return 'DC'
         elif sender == self.actionDirect_InRAM:
             print("Direct InRAM selected")
-            self.label_RAM_model.setText('RAM model: Display internal data memory area')
+            self.label_RAM_model.setText('Memory model: Display internal data memory area')
             self.signal_RAM_model.emit('DD')
             self.verticalScrollBar_RAM.setMaximum(3)#0000-00ff
             return 'DD'
         elif sender == self.actionIndirect_InRAM:
             print("Indirect InRAM selected")
-            self.label_RAM_model.setText('RAM model: Display indirect data memory area ')
+            self.label_RAM_model.setText('Memory model: Display indirect data memory area ')
             self.signal_RAM_model.emit('DI')
             self.verticalScrollBar_RAM.setMaximum(3)#0000-00ff
             return 'DI'
         elif sender == self.actionExternal_RAM:
             print("External RAM selected")
-            self.label_RAM_model.setText('RAM model: Display external data memory area ')
+            self.label_RAM_model.setText('Memory model: Display external data memory area ')
             self.signal_RAM_model.emit('DX')
-            self.verticalScrollBar_RAM.setMaximum(63)#0000-0fff
+            self.verticalScrollBar_RAM.setMaximum(1023)#0000-ffff
             return 'DX'
     def get_RAM(self):
         if self.PortSelect.com.is_open == True:
@@ -374,27 +422,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if lstfile_dir == '':
             return
         else:
-            with open(lstfile_dir, 'r', encoding='cp1252') as f:
+            with open(lstfile_dir, 'r') as f:
                 lst_content = f.read()
-            #pattern = re.compile(r'^(\s*[\w\$]+:)?\s*([^\r\n;]*)', re.MULTILINE)
 
             lst_content = lst_content.split('Symbol Table')[0]
             address_pattern = re.compile(r'^.+\s:\s.+$', re.MULTILINE)
-            #\s+\w+\s+:+\s(.+?): 匹配注释行
-            #\s+\w+\s+:+\s(.+?):*\r?\n|(?<!\n)\r 匹配全部字符
-            #\s + [0 - 9a - fA - F] +\s +: +(.+?); 匹配非注释行
-            #(\s+\w+\s+:+(.+?);(.+?)\r?\n|(?<!\n)\r)|(\s+\w+\s+:+(.+?):(.+?)\r?\n|(?<!\n)\r
-            #^(\(\d\))?\s+\d+(\/)\s+[0-9a-fA-F]+\s:?;?(.+?)+$匹配大部分行
-            #[0-9a-fA-F]+\s:(.+?):?;?(.+?)+匹配所有行
-            # 提取地址和内容
+            # Extract address and content
             addresses = address_pattern.findall(lst_content)
-            # 输出匹配结果
+            # Output matching results
             lines = addresses
             addresses_unuseful_pattern = re.compile(r'\(\d{1,3}\).+', re.IGNORECASE)
             addresses_unuseful = addresses_unuseful_pattern.findall(lst_content)
             address_content_list = []
             #lines = list(set(lines)-set(addresses_unuseful))
-            # 遍历每一行
+            # Loop through each row
             for line in lines:
                 parts = line.split(':',1)
                 address = parts[0]
@@ -403,27 +444,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     continue
                 else:
                     address = parts[0].strip()
-                    address_include_file = parts[0].strip()
-                    address = address[-4:]# 获取地址部分
+                    address = address[-4:]# Get the address part
                     address = address.replace(' ', '')
-                    #content = parts[1].strip() if len(parts) > 1 else ''  # 获取内容部分（如果有）
                     content = parts[1]
-                    #address_lines[address] = content  # 更新字典
+                    address_content_list.append((address,content))#update list
 
-                    address_content_list.append((address,content))#更新列表
-
-                # 输出结果
-                # for address, content in address_lines.items():
-                #     address=address.zfill(4) #补全4位十六进制
-                #     memory=address+' : '+content
-                #     self.listWidget_ASM.addItem(memory)
-                #address_content_list.sort()
             for address, content in address_content_list:
-                address = address.zfill(4)  # 补全4位十六进
+                address = address.zfill(4)  # Complete 4-digit hexadecimal
                 print(len(content.strip()))
                 if content.isspace():
                     print("All Space")
-
                 if  len(content) < 3:
                         return False
                 elif (content[1].isdigit() or ('A' <= content[1] <='F')) and (content[2].isdigit() or ('A' <= content[2] <='F')):
@@ -454,33 +484,35 @@ C:66F0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 #'
         )
         '''
-        s = s.replace('C:', '')  # 去掉C
-        bar = '-'  # 每隔8位HEX添加分隔符
-        star = '|'  # 分割ASCII区域分隔符
-        c = str.splitlines(s)  # 把数列列表分割成字符串
-        c = c[1:]  # 去掉指令部分
+
+
+        bar = '-'  # add separator every 8 bits of HEX
+        star = '|'  # split ASCII area separator
+        c = str.splitlines(s)  # split the list of numbers into strings
+        c = c[1:]  # remove the instruction part
         d = ''
         e = '\r\n'
         for line in c:
-            line = line.split()  # 分割字符串成单个行
-            line_list = list(line)  # 分割每个行为单个字节
+            line = line.split()  # split the string into single lines
+            line_list = list(line)  # split each line into single bytes
             ascii_list = []
             for hex_str in line_list[1:]:
                 char = chr(int(hex_str, 16))
-                if char.isprintable():  # 判断是否可见ASCII码
+                if char.isprintable():  # determine whether the ASCII code is visible
                     ascii_list.append(char)
                 else:
-                    ascii_list.append('.')  # 不可见替换成'.'
-            line_list.insert(9, bar)  # 添加分隔符
+                    ascii_list.append('.')  # replace invisible with '.'
+            line_list.insert(9, bar)  # Add separator
             line_hex = ' '.join(line_list)
             line_ascii = ''.join(ascii_list)
             d = d + line_hex + ' ' + star + line_ascii + star + e
-            # print(d)
+        # print(d)
         # print(d)
         # print(repr(d))
         # print(ascii_list)
         self.label_RAM.setText(d)
         return s
+
 
     def set_IO(self, message):
         #s=message.split("\r\n#dd")

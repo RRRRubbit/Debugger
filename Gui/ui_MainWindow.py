@@ -16,7 +16,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowModality(QtCore.Qt.WindowModal)
         MainWindow.setEnabled(True)
-        MainWindow.resize(800, 646)
+        MainWindow.resize(800, 642)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -40,7 +40,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_RAM.sizePolicy().hasHeightForWidth())
         self.label_RAM.setSizePolicy(sizePolicy)
-        self.label_RAM.setMinimumSize(QtCore.QSize(0, 80))
+        self.label_RAM.setMinimumSize(QtCore.QSize(900, 80))
         self.label_RAM.setMaximumSize(QtCore.QSize(16777215, 100))
         font = QtGui.QFont()
         font.setFamily("Courier New")
@@ -102,6 +102,8 @@ class Ui_MainWindow(object):
         font.setBold(True)
         font.setWeight(75)
         self.listWidget_ASM.setFont(font)
+        self.listWidget_ASM.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.listWidget_ASM.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.listWidget_ASM.setObjectName("listWidget_ASM")
         self.horizontalLayout.addWidget(self.listWidget_ASM)
         self.label_Port = QtWidgets.QLabel(self.centralwidget)
@@ -137,7 +139,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addLayout(self.gridLayout, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 23))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
         self.menubar.setObjectName("menubar")
         self.menu = QtWidgets.QMenu(self.menubar)
         self.menu.setObjectName("menu")
@@ -228,7 +230,6 @@ class Ui_MainWindow(object):
         self.menuView.addAction(self.actionIndirect_InRAM)
         self.menuView.addAction(self.actionExternal_RAM)
         self.menuView.addSeparator()
-        self.menuView.addAction(self.actionView_Address)
         self.menuView.addAction(self.actionRefresh_Display)
         self.menuBreak.addAction(self.actionMake_BreakPoint)
         self.menuBreak.addAction(self.actionClean_All_Break_Point)
@@ -258,10 +259,10 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Debugger 51"))
-        self.label_RAM.setText(_translate("MainWindow", "0000: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|\n"
-"0010: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|\n"
-"0020: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|\n"
-"0030: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|"))
+        self.label_RAM.setText(_translate("MainWindow", "C:0000: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|\n"
+"C:0010: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|\n"
+"C:0020: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|\n"
+"C:0030: 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00 |................|"))
         self.label_Reg.setText(_translate("MainWindow", "RA RB R0 R1 R2 R3 R4 R5 R6 R7    PSW     DPTR  SP   PC\n"
 "00 00 00 00 00 00 00 00 00 00  ---R0---  0000  00  0000\n"
 ""))
@@ -278,7 +279,7 @@ class Ui_MainWindow(object):
 "P5 = 00000000\n"
 "\n"
 ""))
-        self.label_RAM_model.setText(_translate("MainWindow", "RAM model: Program Memory"))
+        self.label_RAM_model.setText(_translate("MainWindow", "Memory model: Display program memory area"))
         self.menu.setTitle(_translate("MainWindow", "File"))
         self.menuRun.setTitle(_translate("MainWindow", "Run"))
         self.menuView.setTitle(_translate("MainWindow", "View"))
@@ -298,7 +299,7 @@ class Ui_MainWindow(object):
         self.actionStep_Function_Run.setShortcut(_translate("MainWindow", "F7"))
         self.actionUpdateregister.setText(_translate("MainWindow", "Updateregister"))
         self.actionUpdateregister.setShortcut(_translate("MainWindow", "F8"))
-        self.actionUpdate_RAM.setText(_translate("MainWindow", "Update RAM"))
+        self.actionUpdate_RAM.setText(_translate("MainWindow", "Update Memory"))
         self.actionUpdate_Port.setText(_translate("MainWindow", "Update Port"))
         self.actionUpdate_ASM.setText(_translate("MainWindow", "Update ASM"))
         self.actionList_Port.setText(_translate("MainWindow", "List Port"))
